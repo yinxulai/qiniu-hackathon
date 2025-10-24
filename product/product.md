@@ -37,59 +37,7 @@ todo
 
 ## 功能使用
 
-### 核心流程图
-
-```mermaid
-flowchart TD
-    Start([用户启动]) --> Wake{语音唤醒 NAME}
-    
-    Wake -->|成功| ShowUI[显示对话界面<br/>NAME: "在呢"]
-    Wake -->|失败| Start
-    
-    ShowUI --> Input{选择输入方式}
-    
-    Input -->|文字| TextInput[输入文字指令<br/>按回车发送]
-    Input -->|语音| VoiceInput[点击语音按钮<br/>开始录音]
-    
-    VoiceInput --> VoiceProcess[实时语音转文字<br/>5秒停顿自动发送]
-    VoiceProcess -->|取消| Input
-    VoiceProcess -->|完成| TaskAnalysis
-    TextInput --> TaskAnalysis
-    
-    TaskAnalysis{指令类型识别}
-    TaskAnalysis -->|新任务| NewTask[创建新任务]
-    TaskAnalysis -->|子任务| SubTask[追加到当前任务]
-    TaskAnalysis -->|控制指令| Control{控制类型}
-    
-    Control -->|终止| TerminateTask[任务状态→已终止]
-    Control -->|关闭| Sleep[NAME进入休眠<br/>所有任务终止]
-    
-    NewTask --> Execute[任务执行面板]
-    SubTask --> Execute
-    
-    Execute --> TaskDisplay[显示任务信息:<br/>📋 任务标题<br/>🟡 任务状态<br/>📝 任务描述]
-    TaskDisplay --> StepDisplay[显示执行步骤:<br/>🔢 步骤序列<br/>✅ 完成状态]
-    
-    StepDisplay --> Processing{任务执行中}
-    Processing -->|进行中| WaitInput[等待用户输入]
-    Processing -->|完成| Complete[✅ 任务完成<br/>NAME缩略为图标]
-    Processing -->|终止| TerminateTask
-    
-    WaitInput --> Input
-    Complete --> History[归档到历史记录]
-    TerminateTask --> History
-    
-    History --> Input
-    Sleep --> Start
-    
-    style Start fill:#e1f5fe
-    style Wake fill:#fff3e0
-    style Execute fill:#f3e5f5
-    style Complete fill:#e8f5e8
-    style Sleep fill:#fce4ec
-```
-
-### 使用流程详细说明
+### 使用流程
 
 #### 1. 语音唤醒 NAME
 
@@ -166,5 +114,3 @@ flowchart TD
 
 - **任务完成展示结果时**：NAME 缩略为小图标，节省界面空间
 - **接收"关闭"指令**：NAME 进入休眠状态，所有进行中任务自动终止
-
-
