@@ -45,6 +45,25 @@ function registerIpcHandlers(mainWindow: BrowserWindow) {
     mainWindow.show()
     mainWindow.focus()
   })
+
+  // 处理应用退出请求
+  ipcMain.on('quit-app', () => {
+    app.quit()
+  })
+
+  // 处理导航到设置页面
+  ipcMain.on('navigate-to-settings', () => {
+    mainWindow.show()
+    mainWindow.focus()
+    mainWindow.webContents.send('navigate', '/setting')
+  })
+
+  // 处理导航到关于页面
+  ipcMain.on('navigate-to-about', () => {
+    mainWindow.show()
+    mainWindow.focus()
+    mainWindow.webContents.send('navigate', '/setting#about')
+  })
 }
 
 function createTray(mainWindow: BrowserWindow) {
@@ -81,13 +100,32 @@ function createTray(mainWindow: BrowserWindow) {
       }
     },
     {
-      label: '重新加载',
+      type: 'separator'
+    },
+    {
+      label: '设置',
       click: () => {
-        mainWindow.reload()
+        mainWindow.show()
+        mainWindow.focus()
+        mainWindow.webContents.send('navigate', '/setting')
+      }
+    },
+    {
+      label: '关于',
+      click: () => {
+        mainWindow.show()
+        mainWindow.focus()
+        mainWindow.webContents.send('navigate', '/setting?tab=about')
       }
     },
     {
       type: 'separator'
+    },
+    {
+      label: '重新加载',
+      click: () => {
+        mainWindow.reload()
+      }
     },
     {
       label: '退出',

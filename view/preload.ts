@@ -25,6 +25,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   showWindow: () => {
     ipcRenderer.send('show-window')
+  },
+
+  // 应用控制
+  quitApp: () => {
+    ipcRenderer.send('quit-app')
+  },
+
+  // 导航控制
+  navigateToSettings: () => {
+    ipcRenderer.send('navigate-to-settings')
+  },
+
+  navigateToAbout: () => {
+    ipcRenderer.send('navigate-to-about')
+  },
+
+  // 监听导航事件
+  onNavigate: (callback: (route: string) => void) => {
+    ipcRenderer.on('navigate', (_, route) => callback(route))
+  },
+
+  // 移除导航监听器
+  removeNavigateListener: () => {
+    ipcRenderer.removeAllListeners('navigate')
   }
 })
 
@@ -37,6 +61,11 @@ declare global {
       platform: string
       hideWindow: () => void
       showWindow: () => void
+      quitApp: () => void
+      navigateToSettings: () => void
+      navigateToAbout: () => void
+      onNavigate: (callback: (route: string) => void) => void
+      removeNavigateListener: () => void
     }
   }
 }

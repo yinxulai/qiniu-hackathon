@@ -3,6 +3,7 @@ import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import Layout from '../components/Layout'
 import MainPage from '../pages/main'
+import SettingPage from '../pages/setting'
 
 const router = createHashRouter([
   {
@@ -12,6 +13,10 @@ const router = createHashRouter([
       {
         index: true,
         element: <MainPage />,
+      },
+      {
+        path: 'setting',
+        element: <SettingPage />,
       },
       {
         path: 'mcp',

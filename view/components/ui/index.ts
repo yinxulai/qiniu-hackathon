@@ -1,3 +1,8 @@
 export { Card } from './Card'
 export { Button } from './Button'
 export { Input } from './Input'
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tab'
+export { Switch } from './Switch'
+export { Select } from './Select'
+export { TextInput } from './TextInput'
+export { Modal } from './Modal'
