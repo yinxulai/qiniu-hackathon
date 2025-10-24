@@ -1,6 +1,6 @@
 import Store from 'electron-store'
 import { v4 as uuidv4 } from 'uuid'
-import { McpServer, McpServerSchema } from './schema'
+import { McpServer, McpServerSchema, UpdateMcpServerInput } from './schema'
 import { UserError } from '@taicode/common-base'
 
 const store = new Store<{ servers: McpServer[] }>({
@@ -25,12 +25,7 @@ export function createMcpServerService() {
     return newServer
   }
 
-  function updateMcp(id: string, updates: {
-    name?: string | undefined
-    transport?: 'stdio' | 'sse' | undefined
-    enabled?: boolean | undefined
-    config?: McpServer['config'] | undefined
-  }): McpServer {
+  function updateMcp(id: string, updates: Omit<UpdateMcpServerInput, 'id'>): McpServer {
     const servers = listMcp()
     const index = servers.findIndex(s => s.id === id)
     if (index === -1) {

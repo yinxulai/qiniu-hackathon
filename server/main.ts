@@ -7,6 +7,7 @@ import { createOpenapi } from '@server/plugins/openapi'
 import { createResponseHandler } from '@server/plugins/response'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
 import { createMcpServerRouter } from './modules/mcp-server/router'
+import { createAutoAgentRouter } from './modules/auto-agent/router'
 
 import { config } from './config'
 
@@ -184,6 +185,7 @@ async function createServer() {
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
   fastify.register(createMcpServerRouter({}))
+  fastify.register(createAutoAgentRouter({}))
 
   await fastify.ready()
   fastify.listen({ port: config.port })

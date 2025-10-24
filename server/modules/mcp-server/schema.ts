@@ -101,6 +101,8 @@ export const UpdateMcpServerSchema = routerSchema({
   response: responseSchema(McpServerSchema),
 })
 
+export type UpdateMcpServerInput = z.infer<typeof UpdateMcpServerSchema.body>
+
 const enableMcpServerDescription = `
 启用指定的 MCP 服务器
 
