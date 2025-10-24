@@ -27,6 +27,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('show-window')
   },
 
+  // 创建新窗口
+  createDebugWindow: () => {
+    ipcRenderer.send('create-debug-window')
+  },
+
+  createSettingWindow: () => {
+    ipcRenderer.send('create-setting-window')
+  },
+
   // 应用控制
   quitApp: () => {
     ipcRenderer.send('quit-app')
@@ -61,6 +70,8 @@ declare global {
       platform: string
       hideWindow: () => void
       showWindow: () => void
+      createDebugWindow: () => void
+      createSettingWindow: () => void
       quitApp: () => void
       navigateToSettings: () => void
       navigateToAbout: () => void

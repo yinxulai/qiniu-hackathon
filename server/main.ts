@@ -8,6 +8,10 @@ import { createResponseHandler } from '@server/plugins/response'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
 import { config } from './config'
 
+// 声明 Vite 环境变量
+declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
+declare const MAIN_WINDOW_VITE_NAME: string
+
 if (started) {
   app.quit()
 }
@@ -51,6 +55,16 @@ function registerIpcHandlers(mainWindow: BrowserWindow) {
     app.quit()
   })
 
+  // 处理创建调试窗口请求
+  ipcMain.on('create-debug-window', () => {
+    createDebugWindow()
+  })
+
+  // 处理创建设置窗口请求
+  ipcMain.on('create-setting-window', () => {
+    createSettingWindow()
+  })
+
   // 处理导航到设置页面
   ipcMain.on('navigate-to-settings', () => {
     mainWindow.show()
@@ -80,7 +94,7 @@ function createTray(mainWindow: BrowserWindow) {
   
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: '显示/隐藏',
+      label: '显示/隐藏主窗口',
       accelerator: 'CommandOrControl+Shift+V',
       click: () => {
         if (mainWindow.isVisible()) {
@@ -97,6 +111,21 @@ function createTray(mainWindow: BrowserWindow) {
         mainWindow.show()
         mainWindow.focus()
         mainWindow.webContents.send('voice-activation')
+      }
+    },
+    {
+      type: 'separator'
+    },
+    {
+      label: '调试窗口',
+      click: () => {
+        createDebugWindow()
+      }
+    },
+    {
+      label: '设置窗口',
+      click: () => {
+        createSettingWindow()
       }
     },
     {
@@ -164,8 +193,68 @@ async function createServer() {
     .catch((err) => console.error('Error starting server:', err))
 }
 
+function createDebugWindow() {
+  // 获取屏幕尺寸
+  const { screen } = require('electron')
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+  
+  // 窗口尺寸
+  const windowWidth = 1200
+  const windowHeight = 800
+  
+  // 计算居中位置
+  const windowX = Math.floor((screenWidth - windowWidth) / 2)
+  const windowY = Math.floor((screenHeight - windowHeight) / 2)
 
-function createWindow() {
+  const debugWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: windowX,
+    y: windowY,
+    minWidth: 800,
+    minHeight: 600,
+    frame: true,
+    transparent: false,
+    alwaysOnTop: false,
+    resizable: true,
+    skipTaskbar: false,
+    minimizable: true,
+    maximizable: true,
+    closable: true,
+    focusable: true,
+    show: false,
+    title: 'Voice Assistant - Debug',
+    webPreferences: {
+      preload: path.join(__dirname, './preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  })
+
+  // 加载调试页面
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    debugWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL + '#/debug')
+  } else {
+    debugWindow.loadFile(
+      path.join(__dirname, `../view/${MAIN_WINDOW_VITE_NAME}/index.html`),
+      { hash: '/debug' }
+    )
+  }
+
+  debugWindow.once('ready-to-show', () => {
+    debugWindow.show()
+  })
+
+  // 在开发模式下打开开发者工具
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    debugWindow.webContents.openDevTools()
+  }
+
+  return debugWindow
+}
+
+function createPanelWindow() {
   if (BrowserWindow.getAllWindows().length >= 1) {
     return
   }
@@ -265,8 +354,64 @@ function createWindow() {
   }
 }
 
-app.on('ready', createWindow)
-app.on('activate', createWindow)
+function createSettingWindow() {
+  // 获取屏幕尺寸
+  const { screen } = require('electron')
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+  
+  // 窗口尺寸
+  const windowWidth = 800
+  const windowHeight = 600
+  
+  // 计算居中位置
+  const windowX = Math.floor((screenWidth - windowWidth) / 2)
+  const windowY = Math.floor((screenHeight - windowHeight) / 2)
+
+  const settingWindow = new BrowserWindow({
+    width: windowWidth,
+    height: windowHeight,
+    x: windowX,
+    y: windowY,
+    minWidth: 600,
+    minHeight: 400,
+    frame: true,
+    transparent: false,
+    alwaysOnTop: false,
+    resizable: true,
+    skipTaskbar: false,
+    minimizable: true,
+    maximizable: true,
+    closable: true,
+    focusable: true,
+    show: false,
+    title: 'Voice Assistant - Settings',
+    webPreferences: {
+      preload: path.join(__dirname, './preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
+    },
+  })
+
+  // 加载设置页面
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    settingWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL + '#/setting')
+  } else {
+    settingWindow.loadFile(
+      path.join(__dirname, `../view/${MAIN_WINDOW_VITE_NAME}/index.html`),
+      { hash: '/setting' }
+    )
+  }
+
+  settingWindow.once('ready-to-show', () => {
+    settingWindow.show()
+  })
+
+  return settingWindow
+}
+
+app.on('ready', createPanelWindow)
+app.on('activate', createPanelWindow)
 
 // 窗口关闭处理 - 开发模式下允许应用退出
 app.on('window-all-closed', () => {
@@ -290,7 +435,7 @@ app.on('will-quit', () => {
 // 处理应用激活
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
+    createPanelWindow()
   } else {
     const windows = BrowserWindow.getAllWindows()
     windows.forEach(window => {

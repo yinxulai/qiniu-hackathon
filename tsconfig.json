@@ -16,5 +16,9 @@
       "@server/*": ["./server/*"],
       "@view/*": ["./view/*"]
     }
-  }
+  },
+  "include": [
+    "server/**/*",
+    "view/**/*"
+  ]
 }
