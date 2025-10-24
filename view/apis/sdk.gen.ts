@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ChatStreamData, ChatStreamErrors, ChatStreamResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses } from './types.gen.js';
+import type { ChatStreamData, ChatStreamErrors, ChatStreamResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -234,5 +234,95 @@ export const chatStream = <ThrowOnError extends boolean = false>(options: Option
             'Content-Type': 'application/json',
             ...options.headers
         }
+    });
+};
+
+/**
+ * 显示主窗口
+ *
+ *
+ * 显示主窗口
+ *
+ * **功能说明：**
+ * - 显示并聚焦主窗口
+ * - 如果窗口未创建，则创建新窗口
+ *
+ */
+export const showWindow = <ThrowOnError extends boolean = false>(options?: Options<ShowWindowData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ShowWindowResponses, ShowWindowErrors, ThrowOnError>({
+        url: '/window/show',
+        ...options
+    });
+};
+
+/**
+ * 隐藏主窗口
+ *
+ *
+ * 隐藏主窗口
+ *
+ * **功能说明：**
+ * - 隐藏主窗口但不关闭
+ * - 可通过快捷键或托盘图标重新显示
+ *
+ */
+export const hideWindow = <ThrowOnError extends boolean = false>(options?: Options<HideWindowData, ThrowOnError>) => {
+    return (options?.client ?? client).post<HideWindowResponses, HideWindowErrors, ThrowOnError>({
+        url: '/window/hide',
+        ...options
+    });
+};
+
+/**
+ * 切换窗口显示状态
+ *
+ *
+ * 切换主窗口显示/隐藏状态
+ *
+ * **功能说明：**
+ * - 如果窗口可见则隐藏
+ * - 如果窗口隐藏则显示
+ *
+ */
+export const toggleWindow = <ThrowOnError extends boolean = false>(options?: Options<ToggleWindowData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ToggleWindowResponses, ToggleWindowErrors, ThrowOnError>({
+        url: '/window/toggle',
+        ...options
+    });
+};
+
+/**
+ * 重新加载窗口
+ *
+ *
+ * 重新加载主窗口
+ *
+ * **功能说明：**
+ * - 重新加载主窗口的内容
+ * - 用于开发调试或刷新界面
+ *
+ */
+export const reloadWindow = <ThrowOnError extends boolean = false>(options?: Options<ReloadWindowData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ReloadWindowResponses, ReloadWindowErrors, ThrowOnError>({
+        url: '/window/reload',
+        ...options
+    });
+};
+
+/**
+ * 退出应用
+ *
+ *
+ * 退出应用程序
+ *
+ * **功能说明：**
+ * - 关闭所有窗口并退出应用
+ * - 清理所有资源
+ *
+ */
+export const quitApp = <ThrowOnError extends boolean = false>(options?: Options<QuitAppData, ThrowOnError>) => {
+    return (options?.client ?? client).post<QuitAppResponses, QuitAppErrors, ThrowOnError>({
+        url: '/window/quit',
+        ...options
     });
 };
