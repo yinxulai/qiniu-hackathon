@@ -1,18 +1,36 @@
 import globals from 'globals'
 import eslint from '@eslint/js'
-import  eslint from 'electron'
+import electron from 'eslint-plugin-electron'
 import tsEslint from 'typescript-eslint'
 
 
 export default [
   eslint.configs.recommended,
   ...tsEslint.configs.recommended,
-  ...electron.configs.recommended,
-  { languageOptions: { globals: globals.node } },
+  ...tsEslint.configs.recommendedTypeChecked,
+  {
+    languageOptions: { 
+      globals: {
+        ...globals.node,
+        ...globals.browser
+      },
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: import.meta.dirname,
+      }
+    }
+  },
   {
     rules: {
       'semi': ['error', 'never'],
-      'quotes': ['error', 'single']
+      'quotes': ['error', 'single'],
+      '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'error'
     }
   },
   {
@@ -21,7 +39,9 @@ export default [
       'node_modules/**',
       'coverage/**',
       'prisma/**',
-      'build/**'
+      'build/**',
+      'dist/**',
+      '.vite/**'
     ]
   }
 ]

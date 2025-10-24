@@ -3,7 +3,7 @@ import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 
 import PanelPage from './pages/panel/PanelPage.js'
 import DebugPage from './pages/debug/DebugPage.js'
-import SettingPage from './pages/setting/SettingPage.js'
+import { SettingPage } from './pages/setting/SettingPage.js'
 
 export default function AppRouter() {
   const [currentRoute, setCurrentRoute] = useState(window.location.hash.slice(1) || '/')

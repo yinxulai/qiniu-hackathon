@@ -6,6 +6,8 @@ import started from 'electron-squirrel-startup'
 import { createOpenapi } from '@server/plugins/openapi'
 import { createResponseHandler } from '@server/plugins/response'
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod'
+import { createMcpServerRouter } from './modules/mcp-server/router'
+
 import { config } from './config'
 
 // 声明 Vite 环境变量
@@ -81,17 +83,12 @@ function registerIpcHandlers(mainWindow: BrowserWindow) {
 }
 
 function createTray(mainWindow: BrowserWindow) {
-  // 创建系统托盘图标 - 使用一个简单的麦克风图标
-  const iconDataUrl = 'data:image/svg+xml;base64,' + Buffer.from(`
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2C13.1046 2 14 2.89543 14 4V12C14 13.1046 13.1046 14 12 14C10.8954 14 10 13.1046 10 12V4C10 2.89543 10.8954 2 12 2Z" fill="black"/>
-      <path d="M17 10V12C17 15.3137 14.3137 18 11 18H10V20H14V22H10V22H10C6.68629 22 4 19.3137 4 16V10H6V12C6 14.2091 7.79086 16 10 16H14C16.2091 16 18 14.2091 18 12V10H17Z" fill="black"/>
-    </svg>
-  `).toString('base64')
-  
-  const icon = nativeImage.createFromDataURL(iconDataUrl)
+  // 使用确认可用的图标路径
+  const iconPath = path.join(process.cwd(), 'static/icon.png')
+  const icon = nativeImage.createFromPath(iconPath)
+
   tray = new Tray(icon.resize({ width: 16, height: 16 }))
-  
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: '显示/隐藏主窗口',
@@ -163,10 +160,10 @@ function createTray(mainWindow: BrowserWindow) {
       }
     }
   ])
-  
+
   tray.setToolTip('Voice Assistant - 语音助手')
   tray.setContextMenu(contextMenu)
-  
+
   // 点击托盘图标显示/隐藏窗口
   tray.on('click', () => {
     if (mainWindow.isVisible()) {
@@ -186,6 +183,7 @@ async function createServer() {
 
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
+  fastify.register(createMcpServerRouter({}))
 
   await fastify.ready()
   fastify.listen({ port: config.port })
@@ -198,11 +196,11 @@ function createDebugWindow() {
   const { screen } = require('electron')
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
-  
+
   // 窗口尺寸
   const windowWidth = 1200
   const windowHeight = 800
-  
+
   // 计算居中位置
   const windowX = Math.floor((screenWidth - windowWidth) / 2)
   const windowY = Math.floor((screenHeight - windowHeight) / 2)
@@ -247,9 +245,9 @@ function createDebugWindow() {
   })
 
   // 在开发模式下打开开发者工具
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    debugWindow.webContents.openDevTools()
-  }
+  // if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+  //   debugWindow.webContents.openDevTools()
+  // }
 
   return debugWindow
 }
@@ -263,13 +261,13 @@ function createPanelWindow() {
   const { screen } = require('electron')
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
-  
+
   // 窗口尺寸配置
   const windowWidth = 320
   const windowHeight = screenHeight
   const windowX = screenWidth - windowWidth // 右侧对齐
 
-    const mainWindow = new BrowserWindow({
+  const mainWindow = new BrowserWindow({
     width: windowWidth,
     height: windowHeight,
     x: windowX,
@@ -315,12 +313,12 @@ function createPanelWindow() {
     mainWindow.setAlwaysOnTop(true, 'floating', 1) // 设置为浮动级别
     mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true }) // 在所有工作区显示
   }
-  
+
   // 防止窗口获得焦点时影响其他应用
   mainWindow.on('focus', () => {
     // 可以在这里添加焦点获得时的逻辑
   })
-  
+
   mainWindow.on('blur', () => {
     // 失去焦点时保持显示
   })
@@ -346,8 +344,6 @@ function createPanelWindow() {
   // 添加系统托盘支持
   createTray(mainWindow)
 
-  createServer()
-  
   // 只在开发模式下打开 DevTools
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.webContents.openDevTools()
@@ -359,11 +355,11 @@ function createSettingWindow() {
   const { screen } = require('electron')
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
-  
+
   // 窗口尺寸
   const windowWidth = 800
   const windowHeight = 600
-  
+
   // 计算居中位置
   const windowX = Math.floor((screenWidth - windowWidth) / 2)
   const windowY = Math.floor((screenHeight - windowHeight) / 2)
@@ -409,6 +405,12 @@ function createSettingWindow() {
 
   return settingWindow
 }
+
+
+createServer()
+  .then(() => {
+    console.log('Electron app is starting...')
+  })
 
 app.on('ready', createPanelWindow)
 app.on('activate', createPanelWindow)

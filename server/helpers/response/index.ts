@@ -1,4 +1,4 @@
-import { ServerErrorType } from '../errors'
+import { UserErrorType, SystemErrorType } from '@taicode/common-base'
 
 // 成功响应类型定义
 interface Response<T = unknown> {
@@ -7,10 +7,10 @@ interface Response<T = unknown> {
   message: string
 }
 
-export function createSuccessResponse<T>(data: T): Response<T> {
+export function createSuccessResponse<T>(data: T){
   return { status: 'SUCCESS' as const, data, message: 'ok' }
 }
 
-export function createErrorResponse(status: ServerErrorType, message = ''): Response {
+export function createErrorResponse(status: UserErrorType | SystemErrorType, message = ''): Response {
   return { status, message, data: null } as const
 }

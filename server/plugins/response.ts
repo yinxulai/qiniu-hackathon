@@ -5,7 +5,7 @@ import { hasZodFastifySchemaValidationErrors, isResponseSerializationError } fro
 import { fromError } from 'zod-validation-error'
 
 import { createErrorResponse } from '@server/helpers/response'
-import { ServerError } from '@server/helpers/errors'
+import { SystemError } from '@taicode/common-base'
 
 export function createResponseHandler(): FastifyPluginAsync {
   return fastifyPlugin(async function plugin(app: FastifyInstance) {
@@ -16,8 +16,8 @@ export function createResponseHandler(): FastifyPluginAsync {
     })
 
     app.setErrorHandler((error, _request, reply) => {
-      if (ServerError.is(error)) {
-        const serverError: ServerError = error
+      if (SystemError.is(error)) {
+        const serverError: SystemError = error
         return reply
           .code(400)
           .send(createErrorResponse(serverError.type, serverError.message))

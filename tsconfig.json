@@ -1,17 +1,30 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "node16",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
     "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
     "sourceMap": true,
     "baseUrl": ".",
     "outDir": "dist",
     "jsx": "preserve",
     "resolveJsonModule": true,
-    "moduleResolution": "node16",
+    "moduleResolution": "NodeNext",
+    "isolatedModules": true,
+    "noEmit": false,
+    "declaration": false,
+    "forceConsistentCasingInFileNames": true,
     "paths": {
       "@server/*": ["./server/*"],
       "@view/*": ["./view/*"]
@@ -19,6 +32,13 @@
   },
   "include": [
     "server/**/*",
-    "view/**/*"
+    "view/**/*",
+    "scripts/**/*",
+    "global.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".vite"
   ]
 }
