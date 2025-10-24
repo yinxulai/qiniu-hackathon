@@ -2,6 +2,7 @@ import React from 'react'
 import { createHashRouter, RouterProvider } from 'react-router-dom'
 
 import Layout from '../components/Layout'
+import MainPage from '../pages/main'
 
 const router = createHashRouter([
   {
@@ -10,7 +11,7 @@ const router = createHashRouter([
     children: [
       {
         index: true,
-        element: <div>Home Page</div>,
+        element: <MainPage />,
       },
       {
         path: 'mcp',

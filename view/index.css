@@ -20,3 +20,55 @@
     app-region: no-drag;
   }
 }
+
+/* Mac 风格毛玻璃效果增强 */
+@layer base {
+  /* 确保完全透明的背景 */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  
+  html {
+    background: transparent !important;
+    background-color: transparent !important;
+    -webkit-background-composite: clear !important;
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+    background-color: transparent !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    -webkit-background-composite: clear !important;
+  }
+  
+  /* 根容器透明 */
+  #root {
+    background: transparent !important;
+    background-color: transparent !important;
+    -webkit-background-composite: clear !important;
+  }
+}
+
+/* 自定义滚动条样式 (当需要显示时) */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  display: block;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}

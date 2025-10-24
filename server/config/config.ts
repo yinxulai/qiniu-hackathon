@@ -9,7 +9,7 @@ export type Config = z.infer<typeof configSchema>
 
 export function loadConfig() {
   return configSchema.parse({
-    port: 40825,
+    port: Math.floor(Math.random() * 65535),
     debug: false,
   })
 }
