@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+/* 隐藏滚动条 */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
+
+/* Electron 窗口拖动工具类 */
+@layer utilities {
+  .drag-region {
+    app-region: drag;
+  }
+  
+  .no-drag-region {
+    app-region: no-drag;
+  }
+}
