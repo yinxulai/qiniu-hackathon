@@ -8,6 +8,7 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { createMcpServerRouter } from './modules/mcp-server/router'
 import { createAutoAgentRouter } from './modules/auto-agent/router'
 import { createWindowService, createWindowRouter } from './modules/window'
+import { createTaskRouter } from './modules/task-manage/router'
 
 import { config } from './config'
 
@@ -35,9 +36,10 @@ async function createServer() {
   fastify.register(createMcpServerRouter({}))
   fastify.register(createAutoAgentRouter({}))
   fastify.register(createWindowRouter({ windowService }))
+  fastify.register(createTaskRouter({}))
 
   await fastify.ready()
-  fastify.listen({ port: config.port })
+  fastify.listen({ port: config.port, host: '127.0.0.1' })
     .then(() => console.log(`Server is running at http://localhost:${config.port}`))
     .catch((err) => console.error('Error starting server:', err))
 }
