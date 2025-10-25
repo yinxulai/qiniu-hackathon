@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { chat } from '../../apis'
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs))
@@ -14,6 +15,8 @@ interface ProcessResult {
   userInput: string
   response: string
   status: 'success' | 'error' | 'processing'
+  duration?: number
+  error?: string
 }
 
 function DebugPage({}: DebugPageProps) {
@@ -21,6 +24,26 @@ function DebugPage({}: DebugPageProps) {
   const [agentPrompt, setAgentPrompt] = useState('你是一个智能助手，负责回答用户的问题。请根据用户输入提供准确、有帮助的回答。')
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState<ProcessResult[]>([])
+
+  // 预设提示词
+  const presetPrompts = [
+    {
+      name: '通用助手',
+      prompt: '你是一个智能助手，负责回答用户的问题。请根据用户输入提供准确、有帮助的回答。'
+    },
+    {
+      name: '代码助手',
+      prompt: '你是一个专业的编程助手。请帮助用户解决编程问题，提供代码示例和技术建议。回答要准确、详细，并包含最佳实践。'
+    },
+    {
+      name: '翻译助手',
+      prompt: '你是一个专业的翻译助手。请将用户输入的文本进行准确翻译，并提供自然流畅的表达。如果需要，请提供多种翻译选项。'
+    },
+    {
+      name: '写作助手',
+      prompt: '你是一个专业的写作助手。请帮助用户改进文本、提供写作建议，或协助创作内容。注重语言的准确性和表达的清晰度。'
+    }
+  ]
 
   // 从本地存储加载提示词
   useEffect(() => {
@@ -35,7 +58,20 @@ function DebugPage({}: DebugPageProps) {
     localStorage.setItem('debugAgentPrompt', agentPrompt)
   }, [agentPrompt])
 
-  // 处理AI响应的模拟函数
+  // 键盘快捷键处理
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault()
+        processInput()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [userInput, agentPrompt, isProcessing])
+
+  // 处理AI响应的函数
   const processInput = async () => {
     if (!userInput.trim()) {
       alert('请输入测试内容')
@@ -43,6 +79,7 @@ function DebugPage({}: DebugPageProps) {
     }
 
     setIsProcessing(true)
+    const startTime = Date.now()
     
     // 创建新的处理记录
     const newResult: ProcessResult = {
@@ -56,24 +93,59 @@ function DebugPage({}: DebugPageProps) {
     setResults(prev => [newResult, ...prev])
     
     try {
-      // 模拟API调用延迟
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // 构建消息数组
+      const messages = [
+        {
+          role: 'system' as const,
+          content: agentPrompt
+        },
+        {
+          role: 'user' as const,
+          content: userInput
+        }
+      ]
+
+      // 调用真实的 chat API
+      const response = await chat({
+        body: {
+          messages: messages
+        }
+      })
       
-      // 模拟AI响应
-      const mockResponse = `基于提示词："${agentPrompt.substring(0, 30)}..."，我对您的输入"${userInput}"的回答是：这是一个模拟的AI响应。在实际应用中，这里会调用真实的AI模型来生成回答。当前时间：${new Date().toLocaleString()}`
+      const duration = Date.now() - startTime
       
-      // 更新结果
-      setResults(prev => prev.map((result, index) => 
-        index === 0 ? { ...result, response: mockResponse, status: 'success' } : result
-      ))
-      
-      // 清空用户输入
-      setUserInput('')
+      // 检查响应状态
+      if (response.data && response.data.status === 'SUCCESS') {
+        // 更新结果
+        setResults(prev => prev.map((result, index) => 
+          index === 0 ? { 
+            ...result, 
+            response: response.data!.data.content, 
+            status: 'success',
+            duration: duration
+          } : result
+        ))
+        
+        // 清空用户输入
+        setUserInput('')
+      } else {
+        throw new Error(response.data?.message || '未知错误')
+      }
       
     } catch (error) {
+      console.error('Chat API error:', error)
+      const duration = Date.now() - startTime
+      const errorMessage = error instanceof Error ? error.message : '未知错误'
+      
       // 处理错误
       setResults(prev => prev.map((result, index) => 
-        index === 0 ? { ...result, response: '处理失败：' + (error as Error).message, status: 'error' } : result
+        index === 0 ? { 
+          ...result, 
+          response: '处理失败', 
+          status: 'error',
+          duration: duration,
+          error: errorMessage
+        } : result
       ))
     } finally {
       setIsProcessing(false)
@@ -82,6 +154,24 @@ function DebugPage({}: DebugPageProps) {
 
   const clearResults = () => {
     setResults([])
+  }
+
+  const exportResults = () => {
+    const data = {
+      exportTime: new Date().toISOString(),
+      agentPrompt: agentPrompt,
+      results: results
+    }
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `debug-results-${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
   }
 
   return (
@@ -117,6 +207,18 @@ function DebugPage({}: DebugPageProps) {
                   </svg>
                   Agent 提示词
                 </h2>
+                {/* 预设提示词按钮 */}
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {presetPrompts.map((preset, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setAgentPrompt(preset.prompt)}
+                      className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded-md transition-colors border border-blue-200"
+                    >
+                      {preset.name}
+                    </button>
+                  ))}
+                </div>
               </div>
               <textarea
                 value={agentPrompt}
@@ -148,8 +250,13 @@ function DebugPage({}: DebugPageProps) {
                 placeholder="输入要测试的用户问题或请求..."
                 className="w-full h-24 p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200"
               />
-              <div className="mt-2 text-xs text-gray-500">
-                字符数: {userInput.length}
+              <div className="mt-2 flex justify-between items-center">
+                <div className="text-xs text-gray-500">
+                  字符数: {userInput.length}
+                </div>
+                <div className="text-xs text-gray-400">
+                  Ctrl+Enter 快速发送
+                </div>
               </div>
             </div>
 
@@ -196,12 +303,20 @@ function DebugPage({}: DebugPageProps) {
                 处理结果
               </h2>
               {results.length > 0 && (
-                <button
-                  onClick={clearResults}
-                  className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 text-sm rounded-md transition-colors border border-red-200"
-                >
-                  清空
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={exportResults}
+                    className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 text-sm rounded-md transition-colors border border-blue-200"
+                  >
+                    导出
+                  </button>
+                  <button
+                    onClick={clearResults}
+                    className="px-3 py-1 bg-red-50 hover:bg-red-100 text-red-600 text-sm rounded-md transition-colors border border-red-200"
+                  >
+                    清空
+                  </button>
+                </div>
               )}
             </div>
 
@@ -218,7 +333,14 @@ function DebugPage({}: DebugPageProps) {
                 results.map((result, index) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-xs text-gray-500">{result.timestamp}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">{result.timestamp}</span>
+                        {result.duration && (
+                          <span className="text-xs text-gray-400">
+                            • {result.duration}ms
+                          </span>
+                        )}
+                      </div>
                       <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-medium",
                         result.status === 'success' ? 'bg-green-100 text-green-700 border border-green-200' :
@@ -248,6 +370,15 @@ function DebugPage({}: DebugPageProps) {
                             'text-gray-800 bg-white border-gray-200'
                           )}>
                             {result.response}
+                          </div>
+                        </div>
+                      )}
+
+                      {result.status === 'error' && result.error && (
+                        <div>
+                          <div className="text-red-700 font-medium mb-1">错误详情:</div>
+                          <div className="text-red-800 bg-red-50 p-2 rounded border border-red-200 text-xs font-mono">
+                            {result.error}
                           </div>
                         </div>
                       )}

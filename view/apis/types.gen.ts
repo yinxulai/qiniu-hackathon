@@ -928,6 +928,93 @@ export type UpdateAgentConfigResponses = {
 
 export type UpdateAgentConfigResponse = UpdateAgentConfigResponses[keyof UpdateAgentConfigResponses];
 
+export type ChatData = {
+    body: {
+        /**
+         * 对话消息列表
+         */
+        messages: Array<{
+            /**
+             * 消息角色
+             */
+            role: 'user' | 'assistant' | 'system';
+            /**
+             * 消息内容
+             */
+            content: string;
+        }>;
+    };
+    path?: never;
+    query?: never;
+    url: '/autoAgent/chat';
+};
+
+export type ChatErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ChatError = ChatErrors[keyof ChatErrors];
+
+export type ChatResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * Agent 响应内容
+             */
+            content: string;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ChatResponse = ChatResponses[keyof ChatResponses];
+
 export type ChatStreamData = {
     body: {
         /**
@@ -1349,3 +1436,688 @@ export type QuitAppResponses = {
 };
 
 export type QuitAppResponse = QuitAppResponses[keyof QuitAppResponses];
+
+export type CreateTaskData = {
+    body: {
+        /**
+         * 任务简介
+         */
+        title: string;
+        /**
+         * 步骤列表
+         */
+        steps: Array<{
+            /**
+             * 步骤简介
+             */
+            title: string;
+        }>;
+    };
+    path?: never;
+    query?: never;
+    url: '/task/create';
+};
+
+export type CreateTaskErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type CreateTaskError = CreateTaskErrors[keyof CreateTaskErrors];
+
+export type CreateTaskResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 任务唯一标识
+             */
+            id: string;
+            /**
+             * 任务简介
+             */
+            title: string;
+            /**
+             * 步骤列表
+             */
+            steps: Array<{
+                /**
+                 * 步骤唯一标识
+                 */
+                id: string;
+                /**
+                 * 步骤简介
+                 */
+                title: string;
+                /**
+                 * 步骤状态
+                 */
+                status: 'completed' | 'failed' | 'cancelled' | 'processing';
+                /**
+                 * 创建时间
+                 */
+                createdAt?: string;
+                /**
+                 * 更新时间
+                 */
+                updatedAt?: string;
+            }>;
+            /**
+             * 创建时间
+             */
+            createdAt?: string;
+            /**
+             * 更新时间
+             */
+            updatedAt?: string;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type CreateTaskResponse = CreateTaskResponses[keyof CreateTaskResponses];
+
+export type ListTasksData = {
+    body?: {
+        /**
+         * 页码
+         */
+        page?: number;
+        /**
+         * 每页数量
+         */
+        pageSize?: number;
+    };
+    path?: never;
+    query?: never;
+    url: '/task/list';
+};
+
+export type ListTasksErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ListTasksError = ListTasksErrors[keyof ListTasksErrors];
+
+export type ListTasksResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            list: Array<{
+                /**
+                 * 任务唯一标识
+                 */
+                id: string;
+                /**
+                 * 任务简介
+                 */
+                title: string;
+                /**
+                 * 步骤列表
+                 */
+                steps: Array<{
+                    /**
+                     * 步骤唯一标识
+                     */
+                    id: string;
+                    /**
+                     * 步骤简介
+                     */
+                    title: string;
+                    /**
+                     * 步骤状态
+                     */
+                    status: 'completed' | 'failed' | 'cancelled' | 'processing';
+                    /**
+                     * 创建时间
+                     */
+                    createdAt?: string;
+                    /**
+                     * 更新时间
+                     */
+                    updatedAt?: string;
+                }>;
+                /**
+                 * 创建时间
+                 */
+                createdAt?: string;
+                /**
+                 * 更新时间
+                 */
+                updatedAt?: string;
+            }>;
+            total: number;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ListTasksResponse = ListTasksResponses[keyof ListTasksResponses];
+
+export type GetTaskData = {
+    body: {
+        /**
+         * 任务ID
+         */
+        id: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/task/get';
+};
+
+export type GetTaskErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type GetTaskError = GetTaskErrors[keyof GetTaskErrors];
+
+export type GetTaskResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 任务唯一标识
+             */
+            id: string;
+            /**
+             * 任务简介
+             */
+            title: string;
+            /**
+             * 步骤列表
+             */
+            steps: Array<{
+                /**
+                 * 步骤唯一标识
+                 */
+                id: string;
+                /**
+                 * 步骤简介
+                 */
+                title: string;
+                /**
+                 * 步骤状态
+                 */
+                status: 'completed' | 'failed' | 'cancelled' | 'processing';
+                /**
+                 * 创建时间
+                 */
+                createdAt?: string;
+                /**
+                 * 更新时间
+                 */
+                updatedAt?: string;
+            }>;
+            /**
+             * 创建时间
+             */
+            createdAt?: string;
+            /**
+             * 更新时间
+             */
+            updatedAt?: string;
+        } | null;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type GetTaskResponse = GetTaskResponses[keyof GetTaskResponses];
+
+export type UpdateTaskData = {
+    body: {
+        /**
+         * 任务ID
+         */
+        id: string;
+        /**
+         * 任务简介
+         */
+        title?: string;
+        /**
+         * 步骤列表
+         */
+        steps?: Array<{
+            /**
+             * 步骤简介
+             */
+            title: string;
+        }>;
+    };
+    path?: never;
+    query?: never;
+    url: '/task/update';
+};
+
+export type UpdateTaskErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type UpdateTaskError = UpdateTaskErrors[keyof UpdateTaskErrors];
+
+export type UpdateTaskResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 任务唯一标识
+             */
+            id: string;
+            /**
+             * 任务简介
+             */
+            title: string;
+            /**
+             * 步骤列表
+             */
+            steps: Array<{
+                /**
+                 * 步骤唯一标识
+                 */
+                id: string;
+                /**
+                 * 步骤简介
+                 */
+                title: string;
+                /**
+                 * 步骤状态
+                 */
+                status: 'completed' | 'failed' | 'cancelled' | 'processing';
+                /**
+                 * 创建时间
+                 */
+                createdAt?: string;
+                /**
+                 * 更新时间
+                 */
+                updatedAt?: string;
+            }>;
+            /**
+             * 创建时间
+             */
+            createdAt?: string;
+            /**
+             * 更新时间
+             */
+            updatedAt?: string;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type UpdateTaskResponse = UpdateTaskResponses[keyof UpdateTaskResponses];
+
+export type DeleteTaskData = {
+    body: {
+        /**
+         * 任务ID
+         */
+        id: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/task/delete';
+};
+
+export type DeleteTaskErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type DeleteTaskError = DeleteTaskErrors[keyof DeleteTaskErrors];
+
+export type DeleteTaskResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type DeleteTaskResponse = DeleteTaskResponses[keyof DeleteTaskResponses];
+
+export type UpdateStepStatusData = {
+    body: {
+        /**
+         * 任务ID
+         */
+        taskId: string;
+        /**
+         * 步骤ID
+         */
+        stepId: string;
+        /**
+         * 新的步骤状态
+         */
+        status: 'completed' | 'failed' | 'cancelled' | 'processing';
+    };
+    path?: never;
+    query?: never;
+    url: '/task/updateStepStatus';
+};
+
+export type UpdateStepStatusErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type UpdateStepStatusError = UpdateStepStatusErrors[keyof UpdateStepStatusErrors];
+
+export type UpdateStepStatusResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 任务唯一标识
+             */
+            id: string;
+            /**
+             * 任务简介
+             */
+            title: string;
+            /**
+             * 步骤列表
+             */
+            steps: Array<{
+                /**
+                 * 步骤唯一标识
+                 */
+                id: string;
+                /**
+                 * 步骤简介
+                 */
+                title: string;
+                /**
+                 * 步骤状态
+                 */
+                status: 'completed' | 'failed' | 'cancelled' | 'processing';
+                /**
+                 * 创建时间
+                 */
+                createdAt?: string;
+                /**
+                 * 更新时间
+                 */
+                updatedAt?: string;
+            }>;
+            /**
+             * 创建时间
+             */
+            createdAt?: string;
+            /**
+             * 更新时间
+             */
+            updatedAt?: string;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type UpdateStepStatusResponse = UpdateStepStatusResponses[keyof UpdateStepStatusResponses];

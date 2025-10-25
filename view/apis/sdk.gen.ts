@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ChatStreamData, ChatStreamErrors, ChatStreamResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses } from './types.gen.js';
+import type { ChatData, ChatErrors, ChatResponses, ChatStreamData, ChatStreamErrors, ChatStreamResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -215,6 +215,28 @@ export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?
 };
 
 /**
+ * Agent 对话
+ *
+ *
+ * 与 Agent 进行对话
+ *
+ * **功能说明：**
+ * - 发送消息给 Agent 并获取完整响应
+ * - 返回 Agent 生成的完整内容
+ *
+ */
+export const chat = <ThrowOnError extends boolean = false>(options: Options<ChatData, ThrowOnError>) => {
+    return (options.client ?? client).post<ChatResponses, ChatErrors, ThrowOnError>({
+        url: '/autoAgent/chat',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * Agent 流式对话
  *
  *
@@ -324,5 +346,140 @@ export const quitApp = <ThrowOnError extends boolean = false>(options?: Options<
     return (options?.client ?? client).post<QuitAppResponses, QuitAppErrors, ThrowOnError>({
         url: '/window/quit',
         ...options
+    });
+};
+
+/**
+ * 创建任务
+ *
+ *
+ * 创建新任务
+ *
+ * **功能说明：**
+ * - 创建一个新的任务，包含任务简介和步骤列表
+ * - 步骤初始状态为"处理中"
+ * - 自动生成任务ID和时间戳
+ *
+ */
+export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<CreateTaskResponses, CreateTaskErrors, ThrowOnError>({
+        url: '/task/create',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 获取任务列表
+ *
+ *
+ * 获取任务列表
+ *
+ * **功能说明：**
+ * - 支持分页查询任务列表
+ * - 返回任务总数和当前页数据
+ *
+ */
+export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ListTasksResponses, ListTasksErrors, ThrowOnError>({
+        url: '/task/list',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options?.headers
+        }
+    });
+};
+
+/**
+ * 获取任务详情
+ *
+ *
+ * 获取单个任务详情
+ *
+ * **功能说明：**
+ * - 根据任务ID获取任务详细信息
+ * - 包含所有步骤的状态信息
+ *
+ */
+export const getTask = <ThrowOnError extends boolean = false>(options: Options<GetTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<GetTaskResponses, GetTaskErrors, ThrowOnError>({
+        url: '/task/get',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 更新任务
+ *
+ *
+ * 更新任务信息
+ *
+ * **功能说明：**
+ * - 支持部分字段更新
+ * - 可以更新任务简介和步骤列表
+ * - 自动更新时间戳
+ *
+ */
+export const updateTask = <ThrowOnError extends boolean = false>(options: Options<UpdateTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError>({
+        url: '/task/update',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 删除任务
+ *
+ *
+ * 删除任务
+ *
+ * **功能说明：**
+ * - 根据任务ID删除任务
+ * - 删除后无法恢复
+ *
+ */
+export const deleteTask = <ThrowOnError extends boolean = false>(options: Options<DeleteTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<DeleteTaskResponses, DeleteTaskErrors, ThrowOnError>({
+        url: '/task/delete',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 更新步骤状态
+ *
+ *
+ * 更新步骤状态
+ *
+ * **功能说明：**
+ * - 更新指定任务中指定步骤的状态
+ * - 支持完成、失败、取消、处理中四种状态
+ * - 自动更新时间戳
+ *
+ */
+export const updateStepStatus = <ThrowOnError extends boolean = false>(options: Options<UpdateStepStatusData, ThrowOnError>) => {
+    return (options.client ?? client).post<UpdateStepStatusResponses, UpdateStepStatusErrors, ThrowOnError>({
+        url: '/task/updateStepStatus',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
     });
 };
