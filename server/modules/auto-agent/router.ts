@@ -10,11 +10,12 @@ import {
   ChatSchema,
 } from './schema'
 import { AIMessage, isAIMessage } from '@langchain/core/messages'
+import type { TaskManageService } from './task-manage/service'
 
-export function createAutoAgentRouter(options: {}): FastifyPluginAsync {
+export function createAutoAgentRouter(options: { taskManageService: TaskManageService }): FastifyPluginAsync {
   return async (app) => {
     const typedApp = app.withTypeProvider<ZodTypeProvider>()
-    const service = createAutoAgentService()
+    const service = createAutoAgentService(options.taskManageService)
 
     typedApp.post('/autoAgent/getConfig', { schema: GetAgentConfigSchema, }, async () => {
       const config = service.getConfig()

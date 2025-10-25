@@ -6,13 +6,14 @@ import { MultiServerMCPClient } from '@langchain/mcp-adapters'
 import { HumanMessage, AIMessage, SystemMessage, BaseMessage } from '@langchain/core/messages'
 import type { AgentConfig, Message, UpdateAgentConfigInput } from './schema'
 import { createMcpServerService } from '../mcp-server/service'
+import type { TaskManageService } from './task-manage/service'
 
 const store = new Store<{ config: AgentConfig | null }>({
   name: 'auto-agent-config',
   defaults: { config: null },
 })
 
-export function createAutoAgentService() {
+export function createAutoAgentService(taskService: TaskManageService) {
   const mcpService = createMcpServerService()
 
   function getConfig(): AgentConfig {
@@ -58,9 +59,15 @@ export function createAutoAgentService() {
     })
 
     // 初始化 MCP 客户端并获取工具
-    const tools = Object.keys(mcpConfig).length > 0
+    const mcpTools = Object.keys(mcpConfig).length > 0
       ? await new MultiServerMCPClient(mcpConfig).getTools()
       : []
+    
+    // 获取内置工具
+    const allTools = taskService.asAgentTools()
+    
+    // 合并内置工具和 MCP 工具
+    const tools = [...allTools, ...mcpTools]
 
     // 转换消息格式
     const langchainMessages = messages.map((msg) => {
@@ -118,9 +125,15 @@ export function createAutoAgentService() {
     })
 
     // 初始化 MCP 客户端并获取工具
-    const tools = Object.keys(mcpConfig).length > 0
+    const mcpTools = Object.keys(mcpConfig).length > 0
       ? await new MultiServerMCPClient(mcpConfig).getTools()
       : []
+    
+    // 获取内置工具
+    const allTools = taskService.asAgentTools()
+    
+    // 合并内置工具和 MCP 工具
+    const tools = [...allTools, ...mcpTools]
 
     // 转换消息格式
     const langchainMessages = messages.map((msg) => {

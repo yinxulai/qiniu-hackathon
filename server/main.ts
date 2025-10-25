@@ -8,7 +8,7 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import { createMcpServerRouter } from './modules/mcp-server/router'
 import { createAutoAgentRouter } from './modules/auto-agent/router'
 import { createWindowService, createWindowRouter } from './modules/window'
-import { createTaskRouter } from './modules/task-manage/router'
+import { createTaskRouter, createTaskService } from './modules/auto-agent/task-manage'
 
 import { config } from './config'
 import { createCors } from './plugins/cors'
@@ -26,6 +26,8 @@ const windowService = createWindowService({
   onQuit: () => app.quit()
 })
 
+const taskManageService = createTaskService() 
+
 async function createServer() {
   const fastify = Fastify({ logger: false })
 
@@ -36,9 +38,9 @@ async function createServer() {
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
   fastify.register(createMcpServerRouter({}))
-  fastify.register(createAutoAgentRouter({}))
+  fastify.register(createTaskRouter({taskManageService}))
   fastify.register(createWindowRouter({ windowService }))
-  fastify.register(createTaskRouter({}))
+  fastify.register(createAutoAgentRouter({taskManageService}))
 
   await fastify.ready()
   fastify.listen({ port: config.port, host: '127.0.0.1' })
