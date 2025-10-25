@@ -1794,6 +1794,152 @@ export type QuitAppResponses = {
 
 export type QuitAppResponse = QuitAppResponses[keyof QuitAppResponses];
 
+export type OpenWindowData = {
+    body: {
+        /**
+         * 窗口类型
+         */
+        type: 'panel' | 'debug' | 'setting';
+    };
+    path?: never;
+    query?: never;
+    url: '/window/open';
+};
+
+export type OpenWindowErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type OpenWindowError = OpenWindowErrors[keyof OpenWindowErrors];
+
+export type OpenWindowResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type OpenWindowResponse = OpenWindowResponses[keyof OpenWindowResponses];
+
+export type CloseWindowData = {
+    body: {
+        /**
+         * 窗口类型
+         */
+        type: 'panel' | 'debug' | 'setting';
+    };
+    path?: never;
+    query?: never;
+    url: '/window/close';
+};
+
+export type CloseWindowErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type CloseWindowError = CloseWindowErrors[keyof CloseWindowErrors];
+
+export type CloseWindowResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type CloseWindowResponse = CloseWindowResponses[keyof CloseWindowResponses];
+
 export type GetAgentConfigData = {
     body?: never;
     path?: never;

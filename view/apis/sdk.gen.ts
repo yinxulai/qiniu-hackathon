@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ChatData, ChatErrors, ChatResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
+import type { ChatData, ChatErrors, ChatResponses, CloseWindowData, CloseWindowErrors, CloseWindowResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, OpenWindowData, OpenWindowErrors, OpenWindowResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -29,11 +29,22 @@ export const getOpenapiJson = <ThrowOnError extends boolean = false>(options?: O
  * 获取 MCP 服务器列表
  *
  *
- * 获取所有 MCP 服务器列表
+ * 获取所有 MCP 服务器配置列表
  *
  * **功能说明：**
- * - 返回系统中配置的所有 MCP 服务器
- * - 包含已启用和已禁用的服务器
+ * - 返回系统中配置的所有 Model Context Protocol 服务器
+ * - 包括已启用和已禁用的服务器配置
+ * - 返回完整的服务器信息：名称、传输协议、配置参数等
+ *
+ * **默认服务器：**
+ * - playwright/mcp: 浏览器自动化操作
+ * - desktop-commander: 桌面系统操作
+ * - self-server-mcp: 自身 API 反射调用
+ *
+ * **使用场景：**
+ * - 设置界面显示所有可用的 MCP 服务器
+ * - 系统管理和监控已配置的服务器
+ * - 批量管理和操作多个 MCP 服务器
  *
  */
 export const listMcpServer = <ThrowOnError extends boolean = false>(options?: Options<ListMcpServerData, ThrowOnError>) => {
@@ -50,8 +61,19 @@ export const listMcpServer = <ThrowOnError extends boolean = false>(options?: Op
  * 获取已启用的 MCP 服务器列表
  *
  * **功能说明：**
- * - 仅返回启用状态的 MCP 服务器
- * - 用于获取当前可用的服务器配置
+ * - 仅返回当前启用状态的 MCP 服务器配置
+ * - 返回的服务器将被 AI Agent 直接使用
+ * - 优化性能，避免返回无关的禁用服务器信息
+ *
+ * **返回数据特点：**
+ * - 只包含 enabled=true 的服务器配置
+ * - 包含完整的连接信息和环境变量
+ * - 按配置时间排序，新配置的服务器在后
+ *
+ * **使用场景：**
+ * - AI Agent 初始化时加载可用的 MCP 工具
+ * - 实时获取当前可操作的外部服务列表
+ * - 动态构建工具链和功能集成
  *
  */
 export const listEnabledMcpServer = <ThrowOnError extends boolean = false>(options?: Options<ListEnabledMcpServerData, ThrowOnError>) => {
@@ -68,9 +90,24 @@ export const listEnabledMcpServer = <ThrowOnError extends boolean = false>(optio
  * 创建新的 MCP 服务器配置
  *
  * **功能说明：**
- * - 添加新的 MCP 服务器到系统配置
- * - 自动生成唯一标识符
- * - 支持 stdio 和 sse 两种传输协议
+ * - 添加新的 Model Context Protocol 服务器到系统配置
+ * - 自动生成唯一标识符和创建时间戳
+ * - 支持 stdio 和 sse 两种传输协议类型
+ * - 默认启用新创建的服务器
+ *
+ * **支持的传输协议：**
+ * - **stdio**: 通过标准输入输出与服务器通信，适用于本地可执行文件
+ * - **sse**: 通过服务器推送事件与远程服务器通信
+ *
+ * **配置参数：**
+ * - name: 服务器显示名称
+ * - transport: 传输协议类型
+ * - config: 具体的连接配置（命令、参数、环境变量等）
+ *
+ * **使用场景：**
+ * - 添加自定义的 MCP 服务器到系统
+ * - 集成第三方工具和服务
+ * - 扩展 AI Agent 的能力边界
  *
  */
 export const createMcpServer = <ThrowOnError extends boolean = false>(options: Options<CreateMcpServerData, ThrowOnError>) => {
@@ -92,8 +129,24 @@ export const createMcpServer = <ThrowOnError extends boolean = false>(options: O
  *
  * **功能说明：**
  * - 修改已存在的 MCP 服务器配置信息
- * - 支持部分字段更新
- * - 不允许修改服务器 ID
+ * - 支持部分字段更新，未提供的字段保持不变
+ * - 不允许修改服务器 ID，保证数据一致性
+ * - 自动更新最后修改时间戳
+ *
+ * **可更新的字段：**
+ * - name: 服务器显示名称
+ * - transport: 传输协议类型（stdio/sse）
+ * - enabled: 启用/禁用状态
+ * - config: 具体连接配置参数
+ *
+ * **注意事项：**
+ * - 更改传输协议时需同时更新相应的 config 配置
+ * - 更新后需要重新连接服务器才能生效
+ *
+ * **使用场景：**
+ * - 修改服务器连接参数或环境变量
+ * - 切换服务器的启用/禁用状态
+ * - 更新服务器显示名称和描述
  *
  */
 export const updateMcpServer = <ThrowOnError extends boolean = false>(options: Options<UpdateMcpServerData, ThrowOnError>) => {
@@ -114,8 +167,20 @@ export const updateMcpServer = <ThrowOnError extends boolean = false>(options: O
  * 启用指定的 MCP 服务器
  *
  * **功能说明：**
- * - 将 MCP 服务器状态设置为启用
- * - 启用后的服务器将在系统中可用
+ * - 将指定 MCP 服务器的状态设置为启用（enabled=true）
+ * - 启用后的服务器将被 AI Agent 自动加载和使用
+ * - 支持对已禁用的服务器重新激活
+ * - 自动更新配置修改时间戳
+ *
+ * **启用后的效果：**
+ * - 服务器将出现在已启用列表中
+ * - AI Agent 可以调用该服务器提供的工具和功能
+ * - 服务器连接将在下次启动时自动建立
+ *
+ * **使用场景：**
+ * - 重新激活暂时禁用的功能模块
+ * - 根据需要动态开启特定的 MCP 服务
+ * - 批量管理多个服务器的状态
  *
  */
 export const enableMcpServer = <ThrowOnError extends boolean = false>(options: Options<EnableMcpServerData, ThrowOnError>) => {
@@ -136,8 +201,21 @@ export const enableMcpServer = <ThrowOnError extends boolean = false>(options: O
  * 禁用指定的 MCP 服务器
  *
  * **功能说明：**
- * - 将 MCP 服务器状态设置为禁用
- * - 禁用后的服务器将不在系统中使用
+ * - 将指定 MCP 服务器的状态设置为禁用（enabled=false）
+ * - 禁用后的服务器将不被 AI Agent 加载和使用
+ * - 保留服务器配置信息，仅更改状态标记
+ * - 自动更新配置修改时间戳
+ *
+ * **禁用后的效果：**
+ * - 服务器不会出现在已启用列表中
+ * - AI Agent 无法访问该服务器的工具和功能
+ * - 现有连接将被断开，资源被释放
+ *
+ * **使用场景：**
+ * - 暂时关闭不需要的功能模块
+ * - 调试时隔离特定服务器的影响
+ * - 性能优化，减少系统资源占用
+ * - 安全管理，控制对外部服务的访问
  *
  */
 export const disableMcpServer = <ThrowOnError extends boolean = false>(options: Options<DisableMcpServerData, ThrowOnError>) => {
@@ -158,8 +236,25 @@ export const disableMcpServer = <ThrowOnError extends boolean = false>(options: 
  * 删除指定的 MCP 服务器配置
  *
  * **功能说明：**
- * - 从系统中永久删除 MCP 服务器配置
- * - 删除后无法恢复
+ * - 从系统中永久删除指定的 MCP 服务器配置
+ * - 完全清除服务器的所有相关信息和连接
+ * - 删除后无法恢复，需要重新创建类似配置
+ * - 自动断开现有连接并释放资源
+ *
+ * **删除后的效果：**
+ * - 服务器不再出现在任何列表中
+ * - 所有相关的连接和资源被完全清理
+ * - AI Agent 无法再访问该服务器的任何功能
+ *
+ * **注意事项：**
+ * - 请在删除前确保不再需要该服务器
+ * - 建议先使用禁用功能进行测试
+ * - 删除内置的默认服务器可能影响系统基本功能
+ *
+ * **使用场景：**
+ * - 清理不再需要的过时配置
+ * - 系统维护和整理
+ * - 移除有问题或失效的服务器配置
  *
  */
 export const deleteMcpServer = <ThrowOnError extends boolean = false>(options: Options<DeleteMcpServerData, ThrowOnError>) => {
@@ -177,12 +272,30 @@ export const deleteMcpServer = <ThrowOnError extends boolean = false>(options: O
  * 创建任务
  *
  *
- * 创建新任务
+ * 创建新的任务计划
  *
  * **功能说明：**
- * - 创建一个新的任务，包含任务简介和步骤列表
- * - 步骤初始状态为"处理中"
- * - 自动生成任务ID和时间戳
+ * - 创建一个新的结构化任务，包含任务标题和详细步骤列表
+ * - 所有步骤初始状态为“处理中”（processing）
+ * - 自动生成唯一任务 ID 和所有步骤的 ID
+ * - 记录创建和更新时间戳信息
+ *
+ * **任务结构：**
+ * - 任务标题：简洁清晰的任务描述
+ * - 步骤列表：包含具体的执行步骤和操作指导
+ * - 状态跟踪：每个步骤都有独立的执行状态
+ *
+ * **步骤状态类型：**
+ * - **processing**: 处理中，正在执行或等待执行
+ * - **completed**: 已完成，成功完成该步骤的所有操作
+ * - **failed**: 已失败，执行过程中遇到错误或问题
+ * - **cancelled**: 已取消，被用户或系统主动取消
+ *
+ * **使用场景：**
+ * - 复杂任务的结构化管理和跟踪
+ * - AI Agent 执行多步骤操作的进度监控
+ * - 用户任务计划和执行的可视化管理
+ * - 任务执行历史和状态记录
  *
  */
 export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>) => {
@@ -200,11 +313,27 @@ export const createTask = <ThrowOnError extends boolean = false>(options: Option
  * 获取任务列表
  *
  *
- * 获取任务列表
+ * 获取任务列表和统计信息
  *
  * **功能说明：**
- * - 支持分页查询任务列表
- * - 返回任务总数和当前页数据
+ * - 支持分页查询系统中的所有任务记录
+ * - 返回任务的基本信息、步骤数量和执行状态
+ * - 提供任务总数和当前页的数据结果
+ * - 按创建时间倒序排列，最新的任务在前
+ *
+ * **分页参数：**
+ * - **page**: 页码，从 1 开始，默认为第 1 页
+ * - **pageSize**: 每页数量，范围 1-100，默认 10 条
+ *
+ * **返回数据结构：**
+ * - **list**: 当前页的任务列表，包含完整的任务和步骤信息
+ * - **total**: 系统中的任务总数，用于计算分页信息
+ *
+ * **使用场景：**
+ * - 任务管理界面的主列表显示
+ * - 任务执行历史的查看和统计
+ * - 批量操作和状态监控
+ * - 任务进度的概览和管理
  *
  */
 export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>) => {
@@ -222,11 +351,30 @@ export const listTasks = <ThrowOnError extends boolean = false>(options?: Option
  * 获取任务详情
  *
  *
- * 获取单个任务详情
+ * 获取指定任务的详细信息
  *
  * **功能说明：**
- * - 根据任务ID获取任务详细信息
- * - 包含所有步骤的状态信息
+ * - 根据任务 ID 获取任务的完整详细信息
+ * - 包括任务的所有步骤、状态和时间信息
+ * - 如果任务不存在则返回 null
+ * - 提供实时的任务执行状态和进度信息
+ *
+ * **返回的详细信息：**
+ * - 任务基本信息：标题、ID、创建时间等
+ * - 所有步骤的完整列表和当前状态
+ * - 每个步骤的执行时间和状态变更历史
+ * - 任务的整体进度和完成情况
+ *
+ * **状态统计信息：**
+ * - 已完成步骤数量和总步骤数
+ * - 失败和取消的步骤统计
+ * - 当前正在处理的步骤信息
+ *
+ * **使用场景：**
+ * - 任务详情页面的数据显示
+ * - 实时监控任务执行进度
+ * - 任务故障排查和问题诊断
+ * - 任务执行结果的分析和审查
  *
  */
 export const getTask = <ThrowOnError extends boolean = false>(options: Options<GetTaskData, ThrowOnError>) => {
@@ -244,12 +392,33 @@ export const getTask = <ThrowOnError extends boolean = false>(options: Options<G
  * 更新任务
  *
  *
- * 更新任务信息
+ * 更新任务信息和配置
  *
  * **功能说明：**
- * - 支持部分字段更新
- * - 可以更新任务简介和步骤列表
- * - 自动更新时间戳
+ * - 修改已存在任务的标题和步骤配置
+ * - 支持部分字段更新，未提供的字段保持不变
+ * - 自动更新任务的最后修改时间戳
+ * - 保留原有步骤的执行状态和历史记录
+ *
+ * **可更新的字段：**
+ * - **title**: 任务的显示标题和简要描述
+ * - **steps**: 任务的步骤列表和执行计划
+ *
+ * **步骤更新逻辑：**
+ * - 新增步骤：自动生成 ID 和设置为“处理中”状态
+ * - 修改步骤：更新步骤标题，保留原有状态
+ * - 删除步骤：移除不再需要的步骤和相关数据
+ *
+ * **注意事项：**
+ * - 步骤更新不会影响已完成或失败的步骤状态
+ * - 建议在任务执行前进行更新，避免影响正在运行的流程
+ * - 更新后需要重新加载任务配置才能生效
+ *
+ * **使用场景：**
+ * - 修正任务计划和步骤安排
+ * - 根据实际情况调整任务范围
+ * - 添加或删除任务步骤
+ * - 优化任务执行效率和流程
  *
  */
 export const updateTask = <ThrowOnError extends boolean = false>(options: Options<UpdateTaskData, ThrowOnError>) => {
@@ -267,11 +436,34 @@ export const updateTask = <ThrowOnError extends boolean = false>(options: Option
  * 删除任务
  *
  *
- * 删除任务
+ * 删除指定的任务和所有相关数据
  *
  * **功能说明：**
- * - 根据任务ID删除任务
- * - 删除后无法恢复
+ * - 根据任务 ID 从系统中永久删除指定任务
+ * - 同时删除任务下的所有步骤和执行记录
+ * - 删除后无法恢复，需要重新创建类似任务
+ * - 如果任务正在执行中，将自动停止相关进程
+ *
+ * **删除前的安全检查：**
+ * - 验证任务 ID 的存在性和有效性
+ * - 检查任务当前的执行状态
+ * - 确保没有其他进程正在依赖该任务
+ *
+ * **删除后的效果：**
+ * - 任务不再出现在任何列表中
+ * - 所有相关的步骤和状态信息被清除
+ * - 任务相关的资源和进程被释放
+ *
+ * **注意事项：**
+ * - 请在删除前确保已保存重要的任务结果
+ * - 建议先停止正在执行的任务再进行删除
+ * - 考虑使用“取消”状态代替直接删除
+ *
+ * **使用场景：**
+ * - 清理已完成或失败的历史任务
+ * - 系统维护和存储空间管理
+ * - 移除错误创建或不再需要的任务
+ * - 批量清理和数据归档
  *
  */
 export const deleteTask = <ThrowOnError extends boolean = false>(options: Options<DeleteTaskData, ThrowOnError>) => {
@@ -289,12 +481,35 @@ export const deleteTask = <ThrowOnError extends boolean = false>(options: Option
  * 更新步骤状态
  *
  *
- * 更新步骤状态
+ * 更新任务中指定步骤的执行状态
  *
  * **功能说明：**
- * - 更新指定任务中指定步骤的状态
- * - 支持完成、失败、取消、处理中四种状态
- * - 自动更新时间戳
+ * - 更新指定任务中指定步骤的当前执行状态
+ * - 支持四种步骤状态的灵活切换和管理
+ * - 自动更新步骤和任务的最后修改时间戳
+ * - 返回更新后的完整任务信息和所有步骤状态
+ *
+ * **支持的状态类型：**
+ * - **processing**: 处理中 - 步骤正在执行或等待开始
+ * - **completed**: 已完成 - 步骤成功完成所有要求的操作
+ * - **failed**: 已失败 - 步骤执行过程中遇到错误或问题
+ * - **cancelled**: 已取消 - 步骤被用户或系统主动停止
+ *
+ * **状态变更规则：**
+ * - 从 processing 可以变更到任何其他状态
+ * - completed/failed/cancelled 状态一般为终态，但支持重置
+ * - 状态变更会影响任务的整体进度计算
+ *
+ * **自动影响：**
+ * - 更新步骤和任务的时间戳信息
+ * - 重新计算任务的整体完成状态和进度
+ * - 触发相关的状态外化和通知机制
+ *
+ * **使用场景：**
+ * - AI Agent 执行任务时实时更新步骤进度
+ * - 用户手动标记步骤的完成或失败状态
+ * - 任务执行过程中的错误处理和恢复
+ * - 任务流程控制和状态跟踪管理
  *
  */
 export const updateStepStatus = <ThrowOnError extends boolean = false>(options: Options<UpdateStepStatusData, ThrowOnError>) => {
@@ -312,11 +527,17 @@ export const updateStepStatus = <ThrowOnError extends boolean = false>(options: 
  * 显示主窗口
  *
  *
- * 显示主窗口
+ * 显示主面板窗口
  *
  * **功能说明：**
- * - 显示并聚焦主窗口
- * - 如果窗口未创建，则创建新窗口
+ * - 显示并聚焦语音助手主面板窗口
+ * - 窗口固定在屏幕右侧，宽度 320px
+ * - 如果窗口未创建，则自动创建新窗口
+ * - 支持快捷键 Ctrl+Shift+V 快速唤醒
+ *
+ * **使用场景：**
+ * - 用户需要打开语音助手界面进行交互
+ * - 通过 API 或快捷键激活助手功能
  *
  */
 export const showWindow = <ThrowOnError extends boolean = false>(options?: Options<ShowWindowData, ThrowOnError>) => {
@@ -330,11 +551,17 @@ export const showWindow = <ThrowOnError extends boolean = false>(options?: Optio
  * 隐藏主窗口
  *
  *
- * 隐藏主窗口
+ * 隐藏主面板窗口
  *
  * **功能说明：**
- * - 隐藏主窗口但不关闭
- * - 可通过快捷键或托盘图标重新显示
+ * - 隐藏语音助手主面板窗口但不关闭进程
+ * - 窗口状态和数据保持在内存中
+ * - 可通过快捷键 Ctrl+Shift+V 或 API 重新显示
+ * - 隐藏后助手仍在后台运行，可处理语音唤醒
+ *
+ * **使用场景：**
+ * - 用户完成交互后暂时隐藏界面
+ * - 保持助手后台运行状态
  *
  */
 export const hideWindow = <ThrowOnError extends boolean = false>(options?: Options<HideWindowData, ThrowOnError>) => {
@@ -348,11 +575,17 @@ export const hideWindow = <ThrowOnError extends boolean = false>(options?: Optio
  * 切换窗口显示状态
  *
  *
- * 切换主窗口显示/隐藏状态
+ * 切换主面板窗口显示/隐藏状态
  *
  * **功能说明：**
- * - 如果窗口可见则隐藏
- * - 如果窗口隐藏则显示
+ * - 智能切换窗口可见性状态
+ * - 当窗口可见时自动隐藏
+ * - 当窗口隐藏时自动显示并聚焦
+ * - 相当于快捷键 Ctrl+Shift+V 的 API 实现
+ *
+ * **使用场景：**
+ * - 快速切换助手界面显示状态
+ * - 一键式窗口管理操作
  *
  */
 export const toggleWindow = <ThrowOnError extends boolean = false>(options?: Options<ToggleWindowData, ThrowOnError>) => {
@@ -366,11 +599,17 @@ export const toggleWindow = <ThrowOnError extends boolean = false>(options?: Opt
  * 重新加载窗口
  *
  *
- * 重新加载主窗口
+ * 重新加载主面板窗口
  *
  * **功能说明：**
- * - 重新加载主窗口的内容
- * - 用于开发调试或刷新界面
+ * - 强制重新加载主窗口的 React 界面内容
+ * - 清除当前界面状态并重新初始化
+ * - 保持窗口位置和大小不变
+ *
+ * **使用场景：**
+ * - 开发调试时刷新前端代码变更
+ * - 界面出现异常时恢复正常状态
+ * - 强制更新界面数据和状态
  *
  */
 export const reloadWindow = <ThrowOnError extends boolean = false>(options?: Options<ReloadWindowData, ThrowOnError>) => {
@@ -384,11 +623,18 @@ export const reloadWindow = <ThrowOnError extends boolean = false>(options?: Opt
  * 退出应用
  *
  *
- * 退出应用程序
+ * 完全退出语音助手应用
  *
  * **功能说明：**
- * - 关闭所有窗口并退出应用
- * - 清理所有资源
+ * - 关闭所有窗口（主面板、调试、设置窗口）
+ * - 终止所有后台服务和 MCP 连接
+ * - 清理内存资源和临时文件
+ * - 注销全局快捷键绑定
+ *
+ * **使用场景：**
+ * - 完全关闭语音助手应用
+ * - 系统关机前的安全退出
+ * - 重启应用前的清理操作
  *
  */
 export const quitApp = <ThrowOnError extends boolean = false>(options?: Options<QuitAppData, ThrowOnError>) => {
@@ -399,14 +645,93 @@ export const quitApp = <ThrowOnError extends boolean = false>(options?: Options<
 };
 
 /**
+ * 打开指定窗口
+ *
+ *
+ * 打开指定类型的窗口
+ *
+ * **功能说明：**
+ * - 根据窗口类型打开对应的功能窗口
+ * - 如果窗口不存在则自动创建并初始化
+ * - 如果窗口已存在则显示并聚焦到前台
+ * - 每种窗口类型采用不同的布局和定位策略
+ *
+ * **支持的窗口类型：**
+ * - **panel**: 主面板窗口 - 屏幕右侧固定，320px 宽度，用于语音交互
+ * - **debug**: 调试窗口 - 屏幕居中显示，1200x800px，用于开发调试和日志查看
+ * - **setting**: 设置窗口 - 屏幕居中显示，800x600px，用于配置管理
+ *
+ * **使用场景：**
+ * - 根据功能需求打开对应的专用窗口
+ * - 多窗口工作流管理
+ *
+ */
+export const openWindow = <ThrowOnError extends boolean = false>(options: Options<OpenWindowData, ThrowOnError>) => {
+    return (options.client ?? client).post<OpenWindowResponses, OpenWindowErrors, ThrowOnError>({
+        url: '/window/open',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 关闭指定窗口
+ *
+ *
+ * 关闭指定类型的窗口
+ *
+ * **功能说明：**
+ * - 安全关闭指定类型的窗口实例
+ * - 保存窗口状态和用户数据（如适用）
+ * - 释放窗口相关的内存资源
+ * - 如果窗口不存在或已关闭则返回 false
+ *
+ * **注意事项：**
+ * - 关闭主面板窗口不会退出应用，仅隐藏界面
+ * - 调试和设置窗口关闭后会完全销毁实例
+ * - 可通过 openWindow 重新创建已关闭的窗口
+ *
+ * **使用场景：**
+ * - 完成特定功能后关闭对应窗口
+ * - 内存优化和窗口管理
+ *
+ */
+export const closeWindow = <ThrowOnError extends boolean = false>(options: Options<CloseWindowData, ThrowOnError>) => {
+    return (options.client ?? client).post<CloseWindowResponses, CloseWindowErrors, ThrowOnError>({
+        url: '/window/close',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
  * 获取 Agent 配置
  *
  *
- * 获取当前 Agent 配置
+ * 获取当前 AI Agent 配置信息
  *
  * **功能说明：**
- * - 获取当前激活的 Agent 配置信息
- * - 包括 API Key、Base URL 和 Model ID
+ * - 获取当前激活的 AI Agent 的完整配置信息
+ * - 包括模型连接参数、API 配置和系统提示词
+ * - 如果未配置则返回 null，需要先初始化配置
+ *
+ * **返回信息包括：**
+ * - id: 配置唯一标识
+ * - apiKey: OpenAI 兼容的 API 密钥
+ * - baseUrl: 模型服务的基础 URL 地址
+ * - modelId: 具体使用的模型标识符
+ * - systemPrompt: 系统提示词（定义 Agent 行为和角色）
+ *
+ * **使用场景：**
+ * - 设置界面显示当前配置状态
+ * - 验证 Agent 是否正确配置
+ * - 获取配置信息进行修改或调试
  *
  */
 export const getAgentConfig = <ThrowOnError extends boolean = false>(options?: Options<GetAgentConfigData, ThrowOnError>) => {
@@ -420,12 +745,29 @@ export const getAgentConfig = <ThrowOnError extends boolean = false>(options?: O
  * 更新 Agent 配置
  *
  *
- * 更新 Agent 配置
+ * 更新 AI Agent 配置信息
  *
  * **功能说明：**
- * - 更新 Agent 的 API 配置信息
- * - 支持部分字段更新
- * - 自动更新时间戳
+ * - 修改 AI Agent 的模型连接和行为配置
+ * - 支持部分字段更新，未提供的字段保持不变
+ * - 自动生成新的配置 ID 和更新时间戳
+ * - 配置更新后立即生效，影响后续对话
+ *
+ * **可更新的配置项：**
+ * - **apiKey**: OpenAI 兼容的 API 密钥
+ * - **baseUrl**: 模型服务的 API 地址（支持自定义部署）
+ * - **modelId**: 模型标识符（如 gpt-4, claude-3.5, 等）
+ * - **systemPrompt**: 系统提示词，定义 Agent 的角色和行为模式
+ *
+ * **注意事项：**
+ * - API Key 将被安全存储，不会在日志中显示
+ * - 更改 baseUrl 时请确保新地址的兼容性
+ * - systemPrompt 更改会直接影响 Agent 的对话风格和能力
+ *
+ * **使用场景：**
+ * - 初始化设置 AI Agent 的模型连接
+ * - 切换不同的 AI 模型或服务提供商
+ * - 调整 Agent 的行为特征和专业领域
  *
  */
 export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?: Options<UpdateAgentConfigData, ThrowOnError>) => {
@@ -443,11 +785,30 @@ export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?
  * Agent 对话
  *
  *
- * 与 Agent 进行对话
+ * 与 AI Agent 进行对话交互
  *
  * **功能说明：**
- * - 发送消息给 Agent 并获取完整响应
- * - 返回 Agent 生成的完整内容
+ * - 发送对话消息给 AI Agent 并获取完整的智能响应
+ * - Agent 可以调用已启用的 MCP 服务器提供的工具和功能
+ * - 支持多轮对话，保持上下文连贯性
+ * - 返回 Agent 生成的最终响应内容
+ *
+ * **消息格式：**
+ * - **user**: 用户输入的消息内容
+ * - **assistant**: AI Agent 的响应内容
+ * - **system**: 系统级别的指令和上下文信息
+ *
+ * **Agent 能力范围：**
+ * - 浏览器自动化操作（通过 playwright MCP）
+ * - 桌面系统操作（通过 desktop-commander MCP）
+ * - 自身 API 反射调用（通过 self-server MCP）
+ * - 文本生成、分析和推理能力
+ *
+ * **使用场景：**
+ * - 语音助手的智能对话功能
+ * - 自动化任务执行和管理
+ * - 复杂查询和多步骤操作处理
+ * - 智能问答和决策支持
  *
  */
 export const chat = <ThrowOnError extends boolean = false>(options: Options<ChatData, ThrowOnError>) => {
