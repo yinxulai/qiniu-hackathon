@@ -59,6 +59,45 @@ function PanelPage({}: PanelPageProps) {
     }
   }
 
+  // 检查任务是否应该显示
+  const shouldShowTask = (task: Task): boolean => {
+    const now = new Date()
+    
+    // 检查任务本身的更新时间
+    if (task.updatedAt) {
+      const taskUpdatedAt = new Date(task.updatedAt)
+      const timeDiff = (now.getTime() - taskUpdatedAt.getTime()) / 1000
+      if (timeDiff <= 30) {
+        return true // 30秒内更新的任务保留显示
+      }
+    }
+    
+    // 检查子任务的更新时间
+    for (const step of task.steps) {
+      if (step.updatedAt) {
+        const stepUpdatedAt = new Date(step.updatedAt)
+        const timeDiff = (now.getTime() - stepUpdatedAt.getTime()) / 1000
+        if (timeDiff <= 30) {
+          return true // 30秒内更新的子任务保留显示
+        }
+      }
+    }
+    
+    // 检查是否有待处理或处理中的状态
+    if (task.status === 'pending' || task.status === 'processing') {
+      return true
+    }
+    
+    // 检查子任务是否有待处理或处理中的状态
+    for (const step of task.steps) {
+      if (step.status === 'processing') {
+        return true
+      }
+    }
+    
+    return false
+  }
+
   // 加载任务列表
   const loadTasks = async () => {
     try {
@@ -77,7 +116,14 @@ function PanelPage({}: PanelPageProps) {
             status: mapStepStatus(step.status)
           }))
         }))
-        setTasks(convertedTasks)
+        
+        // 只取第一个任务，并检查是否应该显示
+        const firstTask = convertedTasks[0]
+        if (firstTask && shouldShowTask(firstTask)) {
+          setTasks([firstTask])
+        } else {
+          setTasks([])
+        }
       }
     } catch (error) {
       console.error('Failed to load tasks:', error)
@@ -110,7 +156,7 @@ function PanelPage({}: PanelPageProps) {
         await loadTasks()
 
         // 检查是否所有任务都完成
-        const currentTasks = await listTasks()
+        const currentTasks = await listTasks({ body: {} })
         if (currentTasks.data?.data?.list) {
           const activeTasks = currentTasks.data.data.list
 

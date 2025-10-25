@@ -142,9 +142,6 @@ function TaskPanel({ tasks, isProcessing, onTaskComplete }: TaskPanelProps) {
                   <h4 className={`font-semibold text-base ${getStatusColor(task.status)}`}>
                     {task.title}
                   </h4>
-                  <span className="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded-full font-medium">
-                    #{index + 1}
-                  </span>
                 </div>
                 
                 {/* 进度条 */}

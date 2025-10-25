@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useASR } from '../../../hooks/useASR'
-import { ASRStatus } from '../../../services/asr-sdk'
 
 interface InputPanelProps {
   onSubmit: (input: string, type: 'voice' | 'text') => void
@@ -17,39 +16,41 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
   const [showSuggestions, setShowSuggestions] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
   
-  // ASR Hook
+  // ASR Hook - 更新为新的接口
   const {
-    status: asrStatus,
-    isRecording,
+    isListening: isRecording,
     isConnected: asrConnected,
     currentText: asrText,
-    connect: connectASR,
-    disconnect: disconnectASR,
-    toggleRecording,
     error: asrError,
-    clearText: clearASRText,
-    isWaitingToSend
-  } = useASR({
-    autoConnect: true, // 自动连接
-    onResult: (text, isFinal) => {
-      // 无论是中间结果还是最终结果，都先更新输入框显示
-      setTextInput(text)
-      
-      if (isFinal && text.trim()) {
-        // 最终结果，稍微延迟一下让用户看到完整文本，然后提交
-        setTimeout(() => {
-          onSubmit(text.trim(), 'voice')
-          addToHistory(text.trim())
-          clearASRText()
-          // 清空输入框
-          setTextInput('')
-        }, 300) // 延迟300ms让用户看到完整文本
-      }
-    },
-    onError: (error) => {
-      console.error('ASR Error:', error)
-    }
+    startListening,
+    stopListening
+  } = useASR((finalText: string) => {
+    console.log('[InputPanel] ASR final result:', finalText)
+    
+    // 最终结果 - 提交
+    console.log('[InputPanel] Submitting final result:', finalText)
+    onSubmit(finalText, 'voice')
+    addToHistory(finalText)
+    setTextInput('') // 提交后清空输入框
   })
+
+  // 同步中间结果到输入框
+  useEffect(() => {
+    if (asrText) {
+      setTextInput(asrText)
+    }
+  }, [asrText])
+
+  // 监听 ASR 错误
+  useEffect(() => {
+    if (asrError) {
+      console.error('[InputPanel] ASR Error details:', {
+        message: asrError,
+        isRecording,
+        asrConnected
+      })
+    }
+  }, [asrError, isRecording, asrConnected])
 
   // 常用指令建议
   const suggestions = [
@@ -76,18 +77,29 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
   }, [])
 
   const handleVoiceInput = async () => {
-    if (isProcessing) return
+    if (isProcessing) {
+      console.warn('[InputPanel] Cannot start voice input: already processing')
+      return
+    }
     
     try {
-      // 切换录音状态
-      await toggleRecording()
-      
-      // 如果开始录音，清空当前输入
+      // 如果要开始录音，先清空输入框
       if (!isRecording) {
         setTextInput('')
+        console.log('[InputPanel] Starting new voice recording')
+        await startListening()
+      } else {
+        console.log('[InputPanel] Stopping current voice recording')
+        stopListening()
       }
     } catch (error) {
-      console.error('Failed to toggle voice input:', error)
+      console.error('[InputPanel] Failed to toggle voice input:', {
+        message: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        isRecording,
+        asrConnected,
+        error
+      })
     }
   }
 
@@ -165,8 +177,6 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
               w-24 h-24 rounded-full flex items-center justify-center transition-all duration-700 relative overflow-hidden
               ${isVoiceActivated || isRecording
                 ? "bg-linear-to-br from-mint-400 via-mint-500 to-mint-600 scale-110 shadow-2xl shadow-mint-400/50"
-                : isWaitingToSend
-                ? "bg-linear-to-br from-yellow-400 via-yellow-500 to-yellow-600 shadow-xl shadow-yellow-400/40"
                 : isProcessing
                 ? "bg-linear-to-br from-mint-300 via-mint-400 to-mint-500 shadow-xl shadow-mint-300/40"
                 : "bg-linear-to-br from-mint-200 via-mint-300 to-mint-400 hover:scale-105 shadow-lg shadow-mint-200/30"
@@ -177,15 +187,13 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
                 absolute inset-0 rounded-full opacity-30
                 ${(isVoiceActivated || isRecording) 
                   ? 'bg-linear-to-r from-white/40 via-transparent to-white/40 animate-spin'
-                  : isWaitingToSend
-                  ? 'bg-linear-to-r from-white/30 via-transparent to-white/30 animate-pulse'
                   : ''
                 }
               `}></div>
               
               {/* AI表情 */}
               <div className="text-white text-4xl relative z-10 transition-all duration-300">
-                {isRecording ? '🎙️' : isWaitingToSend ? '⏳' : (isProcessing ? '🤔' : '🤖')}
+                {isRecording ? '🎙️' : (isProcessing ? '🤔' : '🤖')}
               </div>
               
               {/* 语音波纹效果 */}
@@ -197,16 +205,10 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
                 </div>
               )}
               
-              {/* 等待发送效果 */}
-              {isWaitingToSend && (
-                <div className="absolute inset-0 rounded-full">
-                  <div className="absolute inset-0 rounded-full bg-yellow-400/20 animate-pulse"></div>
-                  <div className="absolute inset-2 rounded-full bg-yellow-400/30 animate-pulse animation-delay-300"></div>
-                </div>
-              )}
+
 
               {/* 处理中脉冲效果 */}
-              {isProcessing && !isRecording && !isWaitingToSend && (
+              {isProcessing && !isRecording && (
                 <div className="absolute inset-1 rounded-full border-3 border-white/40 border-t-white/80 animate-spin"></div>
               )}
             </div>
@@ -216,12 +218,11 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
               <div className={`
                 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs
                 ${isRecording ? 'bg-red-500 animate-pulse' :
-                  isWaitingToSend ? 'bg-yellow-500 animate-pulse' :
                   isProcessing ? 'bg-yellow-500' :
                   asrConnected ? 'bg-green-500' :
                   asrError ? 'bg-red-400' : 'bg-gray-400'}
               `}>
-                {isRecording ? '🔴' : isWaitingToSend ? '⏳' : isProcessing ? '⚡' : asrConnected ? '👂' : asrError ? '❌' : '💤'}
+                {isRecording ? '🔴' : isProcessing ? '⚡' : asrConnected ? '👂' : asrError ? '❌' : '💤'}
               </div>
             </div>
           </div>
@@ -234,12 +235,8 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
               🎤 正在聆听您的指令...
             </div>
           )}
-          {isWaitingToSend && (
-            <div className="text-yellow-600 text-sm font-medium animate-pulse">
-              ⏳ 检测到停止说话，3秒后自动发送...
-            </div>
-          )}
-          {isProcessing && !isRecording && !isWaitingToSend && (
+
+          {isProcessing && !isRecording && (
             <div className="text-mint-600 text-sm font-medium flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-mint-400 border-t-transparent rounded-full animate-spin"></div>
               {isPolling ? 'AI正在执行任务，实时更新中...' : 'AI正在思考并执行...'}
@@ -250,12 +247,12 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
               ❌ 语音识别错误: {asrError}
             </div>
           )}
-          {asrConnected && !isRecording && !isWaitingToSend && !isProcessing && !asrError && (
+          {asrConnected && !isRecording && !isProcessing && !asrError && (
             <div className="text-mint-600 text-sm font-medium">
               👂 语音识别已连接，点击麦克风开始说话
             </div>
           )}
-          {!asrConnected && !isRecording && !isWaitingToSend && !isProcessing && !asrError && (
+          {!asrConnected && !isRecording && !isProcessing && !asrError && (
             <div className="text-gray-500 text-sm">
               💬 输入指令或点击语音按钮开始对话
             </div>
