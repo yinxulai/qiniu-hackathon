@@ -7,6 +7,7 @@ import { z } from 'zod'
 export const ASRConfigSchema = z.object({
   appkey: z.string().min(1).describe('阿里云语音识别 AppKey'),
   token: z.string().min(1).describe('阿里云语音识别 Token'),
+  accessKey: z.string().optional().describe('Picovoice Access Key 用于语音唤醒'),
   updatedAt: z.string().optional().describe('最后更新时间'),
 })
 
@@ -73,6 +74,7 @@ export const UpdateASRConfigSchema = routerSchema({
   body: z.object({
     appkey: z.string().min(1).describe('阿里云语音识别 AppKey'),
     token: z.string().min(1).describe('阿里云语音识别 Token'),
+    accessKey: z.string().optional().describe('Picovoice Access Key 用于语音唤醒'),
   }),
   response: responseSchema(ASRConfigSchema),
 })

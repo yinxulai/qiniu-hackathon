@@ -2286,6 +2286,10 @@ export type GetAsrConfigResponses = {
              */
             token: string;
             /**
+             * Picovoice Access Key 用于语音唤醒
+             */
+            accessKey?: string;
+            /**
              * 最后更新时间
              */
             updatedAt?: string;
@@ -2313,6 +2317,10 @@ export type UpdateAsrConfigData = {
          * 阿里云语音识别 Token
          */
         token: string;
+        /**
+         * Picovoice Access Key 用于语音唤醒
+         */
+        accessKey?: string;
     };
     path?: never;
     query?: never;
@@ -2375,6 +2383,10 @@ export type UpdateAsrConfigResponses = {
              * 阿里云语音识别 Token
              */
             token: string;
+            /**
+             * Picovoice Access Key 用于语音唤醒
+             */
+            accessKey?: string;
             /**
              * 最后更新时间
              */

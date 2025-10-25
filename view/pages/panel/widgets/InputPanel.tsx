@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useASR } from '../../../hooks/useASR'
 
 interface InputPanelProps {
@@ -62,21 +62,8 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
     "查看网络状态"
   ]
 
-  useEffect(() => {
-    // 监听语音激活事件
-    const handleVoiceActivation = () => {
-      setIsVoiceActivated(true)
-      setTimeout(() => setIsVoiceActivated(false), 2000)
-    }
-
-    window.electronAPI?.onVoiceActivation?.(handleVoiceActivation)
-
-    return () => {
-      window.electronAPI?.removeVoiceActivationListener?.()
-    }
-  }, [])
-
-  const handleVoiceInput = async () => {
+  // 使用 useCallback 包装 handleVoiceInput
+  const handleVoiceInput = useCallback(async () => {
     if (isProcessing) {
       console.warn('[InputPanel] Cannot start voice input: already processing')
       return
@@ -101,7 +88,35 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
         error
       })
     }
-  }
+  }, [isProcessing, isRecording, startListening, stopListening, asrConnected])
+
+  useEffect(() => {
+    // 监听语音激活事件
+    const handleVoiceActivation = () => {
+      setIsVoiceActivated(true)
+      setTimeout(() => setIsVoiceActivated(false), 2000)
+    }
+
+    // 监听语音唤醒事件
+    const handleVoiceWakeup = (data: { timestamp: number; action: string }) => {
+      console.log('[InputPanel] Voice wakeup detected:', data)
+      if (data.action === 'start-voice-input') {
+        // 自动开始语音输入
+        handleVoiceInput()
+        setIsVoiceActivated(true)
+        setTimeout(() => setIsVoiceActivated(false), 3000)
+      }
+    }
+
+    // 注册事件监听器
+    window.electronAPI?.onVoiceActivation?.(handleVoiceActivation)
+    window.electronAPI?.onVoiceWakeup?.(handleVoiceWakeup)
+
+    return () => {
+      window.electronAPI?.removeVoiceActivationListener?.()
+      window.electronAPI?.removeVoiceWakeupListener?.()
+    }
+  }, [handleVoiceInput]) // 添加 handleVoiceInput 依赖
 
   const addToHistory = (input: string) => {
     setInputHistory(prev => {

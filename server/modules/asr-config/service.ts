@@ -28,10 +28,14 @@ export class ASRConfigService {
   /**
    * 更新 ASR 配置
    */
-  updateConfig(appkey: string, token: string): ASRConfig {
+  updateConfig(appkey: string, token: string, accessKey?: string): ASRConfig {
+    // 获取当前配置以保留原有的 accessKey
+    const currentConfig = this.getConfig()
+    
     const config: ASRConfig = {
       appkey: appkey.trim(),
       token: token.trim(),
+      accessKey: accessKey !== undefined ? accessKey.trim() : currentConfig?.accessKey,
       updatedAt: new Date().toISOString()
     }
     

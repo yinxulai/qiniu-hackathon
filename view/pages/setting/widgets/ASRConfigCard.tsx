@@ -4,12 +4,14 @@ import { getAsrConfig, updateAsrConfig, deleteAsrConfig } from '../../../apis'
 interface ASRConfig {
   appkey: string
   token: string
+  accessKey: string
 }
 
 export function ASRConfigCard() {
   const [config, setConfig] = useState<ASRConfig>({
     appkey: '',
-    token: ''
+    token: '',
+    accessKey: ''
   })
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
@@ -29,13 +31,14 @@ export function ASRConfigCard() {
       const savedConfig = response.data?.data
       if (savedConfig) {
         setConfig({
-          appkey: savedConfig.appkey,
-          token: savedConfig.token
+          appkey: savedConfig.appkey || '',
+          token: savedConfig.token || '',
+          accessKey: savedConfig.accessKey || ''
         })
       }
       
       // 检查是否有有效配置
-      const hasValid = savedConfig && savedConfig.appkey.trim() !== '' && savedConfig.token.trim() !== ''
+      const hasValid = savedConfig && savedConfig.appkey.trim() !== '' && savedConfig.token.trim() !== '' && savedConfig.accessKey?.trim() !== ''
       setHasValidConfig(!!hasValid)
     } catch (error) {
       console.error('Failed to load ASR config:', error)
@@ -46,8 +49,8 @@ export function ASRConfigCard() {
   }
 
   const saveConfig = async () => {
-    if (!config.appkey.trim() || !config.token.trim()) {
-      setMessage({ type: 'error', text: '请填写完整的 AppKey 和 Token' })
+    if (!config.appkey.trim() || !config.token.trim() || !config.accessKey.trim()) {
+      setMessage({ type: 'error', text: '请填写完整的 AppKey、Token 和 Access Key' })
       return
     }
 
@@ -59,7 +62,8 @@ export function ASRConfigCard() {
       const response = await updateAsrConfig({
         body: {
           appkey: config.appkey.trim(),
-          token: config.token.trim()
+          token: config.token.trim(),
+          accessKey: config.accessKey.trim()
         }
       })
       
@@ -88,7 +92,8 @@ export function ASRConfigCard() {
       
       setConfig({
         appkey: '',
-        token: ''
+        token: '',
+        accessKey: ''
       })
       
       const response = await deleteAsrConfig()

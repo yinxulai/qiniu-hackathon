@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { ModelProviderCard } from './widgets/ModelProviderCard'
 import { MCPConnectionCard } from './widgets/MCPConnectionCard'
-import { ASRConfigCard } from './widgets/ASRConfigCard'
+import { VoiceConfigCard } from './widgets/VoiceConfigCard'
 
 export function SettingPage() {
-  const [activeTab, setActiveTab] = useState<'model' | 'mcp' | 'asr'>('model')
+  const [activeTab, setActiveTab] = useState<'model' | 'mcp' | 'voice'>('model')
 
   return (
     <div className="min-h-screen bg-linear-to-br from-mint-50 via-emerald-50 to-teal-50 p-4 md:p-8">
@@ -52,9 +52,9 @@ export function SettingPage() {
             </div>
           </button>
           <button
-            onClick={() => setActiveTab('asr')}
+            onClick={() => setActiveTab('voice')}
             className={`flex-1 px-4 md:px-6 py-2 md:py-3 rounded-xl font-medium transition-all duration-300 text-sm md:text-base ${
-              activeTab === 'asr'
+              activeTab === 'voice'
                 ? 'bg-linear-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-200/50'
                 : 'text-gray-600 hover:bg-emerald-50/50'
             }`}
@@ -63,7 +63,7 @@ export function SettingPage() {
               <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
               </svg>
-              <span className="hidden sm:inline">语音识别</span>
+              <span className="hidden sm:inline">语音配置</span>
               <span className="sm:hidden">语音</span>
             </div>
           </button>
@@ -74,7 +74,7 @@ export function SettingPage() {
       <div className="max-w-6xl mx-auto">
         {activeTab === 'model' && <ModelProviderCard />}
         {activeTab === 'mcp' && <MCPConnectionCard />}
-        {activeTab === 'asr' && <ASRConfigCard />}
+        {activeTab === 'voice' && <VoiceConfigCard />}
       </div>
     </div>
   )

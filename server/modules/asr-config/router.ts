@@ -31,14 +31,14 @@ export function createASRConfigRouter(options: CreateASRConfigRouterOptions = {}
     typedApp.post('/asr/config/update', {
       schema: UpdateASRConfigSchema
     }, async (request) => {
-      const { appkey, token } = request.body
+      const { appkey, token, accessKey } = request.body
       
       // 验证输入
       if (!appkey.trim() || !token.trim()) {
         throw new UserError('INVALID_INPUT', 'AppKey 和 Token 不能为空')
       }
       
-      const config = asrConfigService.updateConfig(appkey, token)
+      const config = asrConfigService.updateConfig(appkey, token, accessKey)
       return createSuccessResponse(config)
     })
 

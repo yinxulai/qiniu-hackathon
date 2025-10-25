@@ -10,9 +10,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('voice-activation', callback)
   },
   
+  // 监听语音唤醒信号
+  onVoiceWakeup: (callback: (data: { timestamp: number; action: string }) => void) => {
+    ipcRenderer.on('voice-wakeup-detected', (event, data) => callback(data))
+  },
+  
   // 移除监听器
   removeVoiceActivationListener: () => {
     ipcRenderer.removeAllListeners('voice-activation')
+  },
+  
+  // 移除语音唤醒监听器
+  removeVoiceWakeupListener: () => {
+    ipcRenderer.removeAllListeners('voice-wakeup-detected')
   },
   
   // 其他可能需要的 API
@@ -24,7 +34,9 @@ declare global {
   interface Window {
     electronAPI: {
       onVoiceActivation: (callback: () => void) => void
+      onVoiceWakeup: (callback: (data: { timestamp: number; action: string }) => void) => void
       removeVoiceActivationListener: () => void
+      removeVoiceWakeupListener: () => void
       platform: string
     }
   }
