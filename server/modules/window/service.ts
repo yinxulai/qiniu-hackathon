@@ -307,6 +307,7 @@ export function createWindowService(options: WindowServiceOptions = {}) {
         backgroundThrottling: false,
         transparent: config.transparent,
         offscreen: false,
+        enableBlinkFeatures: 'MediaDevices'
       },
     }
 

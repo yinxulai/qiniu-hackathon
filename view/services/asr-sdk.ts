@@ -1,0 +1,402 @@
+/**
+ * 阿里云实时语音识别 SDK
+ * 基于 WebSocket 的实时语音转文字服务
+ * 
+ * @author Voice Assistant Team
+ * @version 1.0.0
+ */
+
+export interface ASRConfig {
+  /** 阿里云应用 AppKey */
+  appkey: string;
+  /** 阿里云访问令牌 */
+  token: string;
+  /** 音频采样率，默认 16000 */
+  sampleRate?: number;
+  /** 音频格式，默认 pcm */
+  format?: string;
+  /** 是否启用中间结果，默认 true */
+  enableIntermediateResult?: boolean;
+  /** 是否启用标点符号预测，默认 true */
+  enablePunctuationPrediction?: boolean;
+  /** 是否启用逆向文本规范化，默认 true */
+  enableInverseTextNormalization?: boolean;
+  /** WebSocket 缓冲区大小，默认 2048 */
+  bufferSize?: number;
+}
+
+export interface ASRResult {
+  /** 识别结果文本 */
+  text: string;
+  /** 是否为最终结果 */
+  isFinal: boolean;
+  /** 置信度 */
+  confidence?: number;
+  /** 识别开始时间 */
+  beginTime?: number;
+  /** 识别结束时间 */
+  endTime?: number;
+}
+
+export interface ASREvents {
+  /** 连接成功 */
+  onConnected?: () => void;
+  /** 连接断开 */
+  onDisconnected?: () => void;
+  /** 连接错误 */
+  onError?: (error: Error) => void;
+  /** 识别结果 */
+  onResult?: (result: ASRResult) => void;
+  /** 中间识别结果 */
+  onIntermediateResult?: (result: ASRResult) => void;
+  /** 录音开始 */
+  onRecordingStart?: () => void;
+  /** 录音停止 */
+  onRecordingStop?: () => void;
+  /** 状态变化 */
+  onStatusChange?: (status: ASRStatus) => void;
+}
+
+export enum ASRStatus {
+  DISCONNECTED = 'disconnected',
+  CONNECTING = 'connecting',
+  CONNECTED = 'connected',
+  RECORDING = 'recording',
+  ERROR = 'error'
+}
+
+/**
+ * 阿里云实时语音识别 SDK
+ */
+export class AliyunASRSDK {
+  private config: Required<ASRConfig>;
+  private events: ASREvents;
+  private websocket: WebSocket | null = null;
+  private audioContext: AudioContext | null = null;
+  private scriptProcessor: ScriptProcessorNode | null = null;
+  private audioInput: MediaStreamAudioSourceNode | null = null;
+  private audioStream: MediaStream | null = null;
+  private status: ASRStatus = ASRStatus.DISCONNECTED;
+  private taskId: string = '';
+  private isRecording: boolean = false;
+
+  constructor(config: ASRConfig, events: ASREvents = {}) {
+    this.config = {
+      ...config,
+      sampleRate: config.sampleRate || 16000,
+      format: config.format || 'pcm',
+      enableIntermediateResult: config.enableIntermediateResult !== false,
+      enablePunctuationPrediction: config.enablePunctuationPrediction !== false,
+      enableInverseTextNormalization: config.enableInverseTextNormalization !== false,
+      bufferSize: config.bufferSize || 2048
+    };
+    this.events = events;
+  }
+
+  /**
+   * 生成 UUID
+   */
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    }).replace(/-/g, '');
+  }
+
+  /**
+   * 更新状态
+   */
+  private updateStatus(status: ASRStatus) {
+    this.status = status;
+    this.events.onStatusChange?.(status);
+  }
+
+  /**
+   * 连接到语音识别服务
+   */
+  async connect(): Promise<void> {
+    if (this.status === ASRStatus.CONNECTED || this.status === ASRStatus.CONNECTING) {
+      throw new Error('Already connected or connecting');
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        this.updateStatus(ASRStatus.CONNECTING);
+        
+        const socketUrl = `wss://nls-gateway.cn-shanghai.aliyuncs.com/ws/v1?token=${this.config.token}`;
+        this.websocket = new WebSocket(socketUrl);
+
+        this.websocket.onopen = () => {
+          this.updateStatus(ASRStatus.CONNECTED);
+          this.events.onConnected?.();
+
+          // 发送开始转录消息
+          this.taskId = this.generateUUID();
+          const startTranscriptionMessage = {
+            header: {
+              appkey: this.config.appkey,
+              namespace: "SpeechTranscriber",
+              name: "StartTranscription",
+              task_id: this.taskId,
+              message_id: this.generateUUID()
+            },
+            payload: {
+              format: this.config.format,
+              sample_rate: this.config.sampleRate,
+              enable_intermediate_result: this.config.enableIntermediateResult,
+              enable_punctuation_prediction: this.config.enablePunctuationPrediction,
+              enable_inverse_text_normalization: this.config.enableInverseTextNormalization
+            }
+          };
+
+          this.websocket!.send(JSON.stringify(startTranscriptionMessage));
+          resolve();
+        };
+
+        this.websocket.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            this.handleMessage(message);
+          } catch (error) {
+            console.error('Failed to parse message:', error);
+          }
+        };
+
+        this.websocket.onerror = (event) => {
+          const error = new Error(`WebSocket error: ${event}`);
+          this.updateStatus(ASRStatus.ERROR);
+          this.events.onError?.(error);
+          reject(error);
+        };
+
+        this.websocket.onclose = () => {
+          this.updateStatus(ASRStatus.DISCONNECTED);
+          this.events.onDisconnected?.();
+          this.cleanup();
+        };
+
+      } catch (error) {
+        this.updateStatus(ASRStatus.ERROR);
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * 处理服务器消息
+   */
+  private handleMessage(message: any) {
+    const { header, payload } = message;
+    
+    switch (header.name) {
+      case 'TranscriptionStarted':
+        // 转录已开始，可以开始录音
+        break;
+        
+      case 'SentenceBegin':
+        // 句子开始
+        break;
+        
+      case 'TranscriptionResultChanged':
+        // 中间识别结果
+        if (payload && payload.result) {
+          const result: ASRResult = {
+            text: payload.result,
+            isFinal: false,
+            confidence: payload.confidence,
+            beginTime: payload.begin_time,
+            endTime: payload.end_time
+          };
+          this.events.onIntermediateResult?.(result);
+        }
+        break;
+        
+      case 'SentenceEnd':
+        // 最终识别结果
+        if (payload && payload.result) {
+          const result: ASRResult = {
+            text: payload.result,
+            isFinal: true,
+            confidence: payload.confidence,
+            beginTime: payload.begin_time,
+            endTime: payload.end_time
+          };
+          this.events.onResult?.(result);
+        }
+        break;
+        
+      case 'TranscriptionCompleted':
+        // 转录完成
+        break;
+        
+      default:
+        console.log('Unknown message type:', header.name);
+    }
+  }
+
+  /**
+   * 开始录音
+   */
+  async startRecording(): Promise<void> {
+    if (this.status !== ASRStatus.CONNECTED) {
+      throw new Error('Not connected to ASR service');
+    }
+
+    if (this.isRecording) {
+      throw new Error('Already recording');
+    }
+
+    try {
+      // 获取音频输入设备
+      this.audioStream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          sampleRate: this.config.sampleRate,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true
+        }
+      });
+
+      // 创建音频上下文
+      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({
+        sampleRate: this.config.sampleRate
+      });
+
+      this.audioInput = this.audioContext.createMediaStreamSource(this.audioStream);
+
+      // 创建脚本处理器
+      this.scriptProcessor = this.audioContext.createScriptProcessor(
+        this.config.bufferSize, 
+        1, 
+        1
+      );
+
+      this.scriptProcessor.onaudioprocess = (event) => {
+        if (!this.isRecording || !this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+          return;
+        }
+
+        const inputData = event.inputBuffer.getChannelData(0);
+        const inputData16 = new Int16Array(inputData.length);
+        
+        // 转换为 PCM 16-bit
+        for (let i = 0; i < inputData.length; ++i) {
+          const sample = inputData[i] || 0;
+          inputData16[i] = Math.max(-1, Math.min(1, sample)) * 0x7FFF;
+        }
+
+        // 发送音频数据
+        this.websocket.send(inputData16.buffer);
+      };
+
+      // 连接音频节点
+      this.audioInput.connect(this.scriptProcessor);
+      this.scriptProcessor.connect(this.audioContext.destination);
+
+      this.isRecording = true;
+      this.updateStatus(ASRStatus.RECORDING);
+      this.events.onRecordingStart?.();
+
+    } catch (error) {
+      throw new Error(`Failed to start recording: ${error}`);
+    }
+  }
+
+  /**
+   * 停止录音
+   */
+  stopRecording(): void {
+    if (!this.isRecording) {
+      return;
+    }
+
+    this.isRecording = false;
+
+    // 清理音频资源
+    if (this.scriptProcessor) {
+      this.scriptProcessor.disconnect();
+      this.scriptProcessor = null;
+    }
+
+    if (this.audioInput) {
+      this.audioInput.disconnect();
+      this.audioInput = null;
+    }
+
+    if (this.audioStream) {
+      this.audioStream.getTracks().forEach(track => track.stop());
+      this.audioStream = null;
+    }
+
+    if (this.audioContext) {
+      this.audioContext.close();
+      this.audioContext = null;
+    }
+
+    this.updateStatus(ASRStatus.CONNECTED);
+    this.events.onRecordingStop?.();
+  }
+
+  /**
+   * 断开连接
+   */
+  disconnect(): void {
+    this.stopRecording();
+
+    if (this.websocket) {
+      this.websocket.close();
+      this.websocket = null;
+    }
+
+    this.cleanup();
+  }
+
+  /**
+   * 清理资源
+   */
+  private cleanup(): void {
+    this.stopRecording();
+    this.websocket = null;
+    this.taskId = '';
+  }
+
+  /**
+   * 获取当前状态
+   */
+  getStatus(): ASRStatus {
+    return this.status;
+  }
+
+  /**
+   * 是否正在录音
+   */
+  getIsRecording(): boolean {
+    return this.isRecording;
+  }
+
+  /**
+   * 是否已连接
+   */
+  isConnected(): boolean {
+    return this.status === ASRStatus.CONNECTED || this.status === ASRStatus.RECORDING;
+  }
+
+  /**
+   * 更新配置
+   */
+  updateConfig(config: Partial<ASRConfig>): void {
+    if (this.isConnected()) {
+      throw new Error('Cannot update config while connected');
+    }
+    
+    this.config = { ...this.config, ...config };
+  }
+
+  /**
+   * 更新事件处理器
+   */
+  updateEvents(events: Partial<ASREvents>): void {
+    this.events = { ...this.events, ...events };
+  }
+}

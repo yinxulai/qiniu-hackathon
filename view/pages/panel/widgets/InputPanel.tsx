@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { useASR } from '../../../hooks/useASR'
+import { ASRStatus } from '../../../services/asr-sdk'
 
 interface InputPanelProps {
   onSubmit: (input: string, type: 'voice' | 'text') => void
@@ -9,12 +11,45 @@ interface InputPanelProps {
 
 function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: InputPanelProps) {
   const [isVoiceActivated, setIsVoiceActivated] = useState(false)
-  const [isListening, setIsListening] = useState(false)
   const [textInput, setTextInput] = useState('')
   const [inputHistory, setInputHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [showSuggestions, setShowSuggestions] = useState(false)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  
+  // ASR Hook
+  const {
+    status: asrStatus,
+    isRecording,
+    isConnected: asrConnected,
+    currentText: asrText,
+    connect: connectASR,
+    disconnect: disconnectASR,
+    toggleRecording,
+    error: asrError,
+    clearText: clearASRText,
+    isWaitingToSend
+  } = useASR({
+    autoConnect: true, // 自动连接
+    onResult: (text, isFinal) => {
+      // 无论是中间结果还是最终结果，都先更新输入框显示
+      setTextInput(text)
+      
+      if (isFinal && text.trim()) {
+        // 最终结果，稍微延迟一下让用户看到完整文本，然后提交
+        setTimeout(() => {
+          onSubmit(text.trim(), 'voice')
+          addToHistory(text.trim())
+          clearASRText()
+          // 清空输入框
+          setTextInput('')
+        }, 300) // 延迟300ms让用户看到完整文本
+      }
+    },
+    onError: (error) => {
+      console.error('ASR Error:', error)
+    }
+  })
 
   // 常用指令建议
   const suggestions = [
@@ -40,18 +75,19 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
     }
   }, [])
 
-  const handleVoiceInput = () => {
+  const handleVoiceInput = async () => {
     if (isProcessing) return
     
-    setIsListening(!isListening)
-    if (!isListening) {
-      // 模拟语音识别
-      setTimeout(() => {
-        const mockVoiceInput = "请帮我整理桌面文件"
-        onSubmit(mockVoiceInput, 'voice')
-        setIsListening(false)
-        addToHistory(mockVoiceInput)
-      }, 2000)
+    try {
+      // 切换录音状态
+      await toggleRecording()
+      
+      // 如果开始录音，清空当前输入
+      if (!isRecording) {
+        setTextInput('')
+      }
+    } catch (error) {
+      console.error('Failed to toggle voice input:', error)
     }
   }
 
@@ -127,8 +163,10 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
           <div className="relative">
             <div className={`
               w-24 h-24 rounded-full flex items-center justify-center transition-all duration-700 relative overflow-hidden
-              ${isVoiceActivated || isListening
+              ${isVoiceActivated || isRecording
                 ? "bg-linear-to-br from-mint-400 via-mint-500 to-mint-600 scale-110 shadow-2xl shadow-mint-400/50"
+                : isWaitingToSend
+                ? "bg-linear-to-br from-yellow-400 via-yellow-500 to-yellow-600 shadow-xl shadow-yellow-400/40"
                 : isProcessing
                 ? "bg-linear-to-br from-mint-300 via-mint-400 to-mint-500 shadow-xl shadow-mint-300/40"
                 : "bg-linear-to-br from-mint-200 via-mint-300 to-mint-400 hover:scale-105 shadow-lg shadow-mint-200/30"
@@ -137,28 +175,38 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
               {/* 动态背景光效 */}
               <div className={`
                 absolute inset-0 rounded-full opacity-30
-                ${(isVoiceActivated || isListening) 
-                  ? 'bg-linear-to-r from-white/40 via-transparent to-white/40 animate-spin' 
+                ${(isVoiceActivated || isRecording) 
+                  ? 'bg-linear-to-r from-white/40 via-transparent to-white/40 animate-spin'
+                  : isWaitingToSend
+                  ? 'bg-linear-to-r from-white/30 via-transparent to-white/30 animate-pulse'
                   : ''
                 }
               `}></div>
               
               {/* AI表情 */}
               <div className="text-white text-4xl relative z-10 transition-all duration-300">
-                {isListening ? '🎙️' : (isProcessing ? '�' : '🤖')}
+                {isRecording ? '🎙️' : isWaitingToSend ? '⏳' : (isProcessing ? '🤔' : '🤖')}
               </div>
               
               {/* 语音波纹效果 */}
-              {isListening && (
+              {isRecording && (
                 <div className="absolute inset-0 rounded-full">
                   <div className="absolute inset-0 rounded-full bg-mint-400/20 animate-ping"></div>
                   <div className="absolute inset-2 rounded-full bg-mint-400/30 animate-ping animation-delay-500"></div>
                   <div className="absolute inset-4 rounded-full bg-mint-400/40 animate-ping animation-delay-1000"></div>
                 </div>
               )}
+              
+              {/* 等待发送效果 */}
+              {isWaitingToSend && (
+                <div className="absolute inset-0 rounded-full">
+                  <div className="absolute inset-0 rounded-full bg-yellow-400/20 animate-pulse"></div>
+                  <div className="absolute inset-2 rounded-full bg-yellow-400/30 animate-pulse animation-delay-300"></div>
+                </div>
+              )}
 
               {/* 处理中脉冲效果 */}
-              {isProcessing && !isListening && (
+              {isProcessing && !isRecording && !isWaitingToSend && (
                 <div className="absolute inset-1 rounded-full border-3 border-white/40 border-t-white/80 animate-spin"></div>
               )}
             </div>
@@ -167,11 +215,13 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
             <div className="absolute -bottom-1 -right-1">
               <div className={`
                 w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs
-                ${isListening ? 'bg-red-500 animate-pulse' : 
+                ${isRecording ? 'bg-red-500 animate-pulse' :
+                  isWaitingToSend ? 'bg-yellow-500 animate-pulse' :
                   isProcessing ? 'bg-yellow-500' :
-                  isVoiceActivated ? 'bg-green-500' : 'bg-gray-400'}
+                  asrConnected ? 'bg-green-500' :
+                  asrError ? 'bg-red-400' : 'bg-gray-400'}
               `}>
-                {isListening ? '🔴' : isProcessing ? '⚡' : isVoiceActivated ? '👂' : '💤'}
+                {isRecording ? '🔴' : isWaitingToSend ? '⏳' : isProcessing ? '⚡' : asrConnected ? '👂' : asrError ? '❌' : '💤'}
               </div>
             </div>
           </div>
@@ -179,23 +229,33 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
 
         {/* 状态文字提示 */}
         <div className="min-h-6">
-          {isListening && (
+          {isRecording && (
             <div className="text-mint-600 text-sm font-medium animate-pulse">
               🎤 正在聆听您的指令...
             </div>
           )}
-          {isProcessing && !isListening && (
+          {isWaitingToSend && (
+            <div className="text-yellow-600 text-sm font-medium animate-pulse">
+              ⏳ 检测到停止说话，3秒后自动发送...
+            </div>
+          )}
+          {isProcessing && !isRecording && !isWaitingToSend && (
             <div className="text-mint-600 text-sm font-medium flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-mint-400 border-t-transparent rounded-full animate-spin"></div>
               {isPolling ? 'AI正在执行任务，实时更新中...' : 'AI正在思考并执行...'}
             </div>
           )}
-          {isVoiceActivated && !isListening && !isProcessing && (
-            <div className="text-mint-600 text-sm font-medium">
-              👋 我在这里，请说出您的需求
+          {asrError && (
+            <div className="text-red-500 text-sm font-medium">
+              ❌ 语音识别错误: {asrError}
             </div>
           )}
-          {!isVoiceActivated && !isListening && !isProcessing && (
+          {asrConnected && !isRecording && !isWaitingToSend && !isProcessing && !asrError && (
+            <div className="text-mint-600 text-sm font-medium">
+              👂 语音识别已连接，点击麦克风开始说话
+            </div>
+          )}
+          {!asrConnected && !isRecording && !isWaitingToSend && !isProcessing && !asrError && (
             <div className="text-gray-500 text-sm">
               💬 输入指令或点击语音按钮开始对话
             </div>
@@ -268,23 +328,30 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
                   <button
                     onClick={handleVoiceInput}
                     disabled={isProcessing}
-                    title="语音输入"
+                    title={`语音输入 ${asrConnected ? '(已连接)' : '(未连接)'}`}
                     className={`
                       group relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 no-drag-region
-                      ${isListening
+                      ${isRecording
                         ? "bg-red-500 hover:bg-red-600 text-white shadow-md"
+                        : asrConnected
+                        ? "bg-green-100 hover:bg-green-200 text-green-600"
                         : "bg-mint-100 hover:bg-mint-200 text-mint-600"
                       }
                       ${isProcessing ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}
                     `}
                   >
                     <span className="text-sm transition-transform duration-200 group-hover:scale-110">
-                      {isListening ? '⏹' : '🎤'}
+                      {isRecording ? '⏹' : '🎤'}
                     </span>
                     
                     {/* 语音按钮光环效果 */}
-                    {isListening && (
+                    {isRecording && (
                       <div className="absolute inset-0 rounded-lg bg-red-400/30 animate-ping"></div>
+                    )}
+                    
+                    {/* 连接状态指示 */}
+                    {asrConnected && !isRecording && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-white"></div>
                     )}
                   </button>
 

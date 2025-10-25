@@ -31,7 +31,7 @@ function PanelPage({}: PanelPageProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [tasks, setTasks] = useState<Task[]>([])
   const [chatResponse, setChatResponse] = useState<string>('')
-  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
+  const [chatHistory, setChatHistory] = useState<Array<{ role: 'user' | 'assistant', content: string, timestamp: Date }>>([])
   const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
   const [isPolling, setIsPolling] = useState(false)
 
@@ -62,14 +62,14 @@ function PanelPage({}: PanelPageProps) {
   // 加载任务列表
   const loadTasks = async () => {
     try {
-      const response = await listTasks()
+      const response = await listTasks({ body: {} })
       if (response.data?.data?.list) {
         // 转换API数据格式为组件所需格式
         const convertedTasks: Task[] = response.data.data.list.map(task => ({
           ...task,
           status: task.steps.every(step => step.status === 'completed') ? 'completed' :
-                  task.steps.some(step => step.status === 'processing') ? 'processing' :
-                  task.steps.some(step => step.status === 'failed') ? 'failed' : 'pending',
+            task.steps.some(step => step.status === 'processing') ? 'processing' :
+              task.steps.some(step => step.status === 'failed') ? 'failed' : 'pending',
           progress: calculateProgress(task.steps),
           subtasks: task.steps.map(step => ({
             id: step.id,
@@ -103,17 +103,17 @@ function PanelPage({}: PanelPageProps) {
 
     console.log('[POLLING] Starting task polling...')
     setIsPolling(true)
-    
+
     const interval = setInterval(async () => {
       try {
         console.log('[POLLING] Fetching task updates...')
         await loadTasks()
-        
+
         // 检查是否所有任务都完成
         const currentTasks = await listTasks()
         if (currentTasks.data?.data?.list) {
           const activeTasks = currentTasks.data.data.list
-          
+
           // 如果没有任务或所有任务都完成了
           if (activeTasks.length === 0) {
             console.log('[POLLING] No active tasks, stopping polling')
@@ -121,11 +121,11 @@ function PanelPage({}: PanelPageProps) {
             setIsProcessing(false)
             return
           }
-          
-          const allCompleted = activeTasks.every(task => 
+
+          const allCompleted = activeTasks.every(task =>
             task.steps.every(step => step.status === 'completed')
           )
-          
+
           if (allCompleted) {
             console.log('[POLLING] All tasks completed, stopping polling in 3 seconds')
             setTimeout(() => {
