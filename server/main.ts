@@ -16,6 +16,7 @@ import { createCors } from './plugins/cors'
 
 // 声明 Vite 环境变量
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
+declare const MAIN_WINDOW_VITE_NAME: string
 
 if (started) {
   app.quit()
@@ -38,10 +39,10 @@ async function createServer() {
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
   fastify.register(createMcpServerRouter({}))
-  fastify.register(createASRConfigRouter({}))
   fastify.register(createTaskRouter({ taskManageService }))
   fastify.register(createWindowRouter({ windowService }))
   fastify.register(createAutoAgentRouter({ taskManageService }))
+  fastify.register(createASRConfigRouter({}))
 
   await fastify.ready()
   fastify.listen({ port: config.port, host: '127.0.0.1' })

@@ -1,39 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { getAsrConfig, updateAsrConfig, deleteAsrConfig } from '../../../apis'
 
 interface ASRConfig {
   appkey: string
   token: string
-}
-
-// API 调用函数
-const getASRConfig = async () => {
-  const response = await fetch('http://localhost:28731/asr/config/get', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  const result = await response.json()
-  return result.success ? result.data : null
-}
-
-const updateASRConfig = async (config: { appkey: string; token: string }) => {
-  const response = await fetch('http://localhost:28731/asr/config/update', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(config)
-  })
-  const result = await response.json()
-  if (!result.success) throw new Error(result.message)
-  return result.data
-}
-
-const deleteASRConfig = async () => {
-  const response = await fetch('http://localhost:28731/asr/config/delete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' }
-  })
-  const result = await response.json()
-  if (!result.success) throw new Error(result.message)
-  return result.data
 }
 
 export function ASRConfigCard() {
@@ -54,8 +24,9 @@ export function ASRConfigCard() {
     try {
       setLoading(true)
       
-      // 使用新的配置工具函数加载配置
-      const savedConfig = await getASRConfig()
+      // 使用生成的 API 客户端加载配置
+      const response = await getAsrConfig()
+      const savedConfig = response.data?.data
       if (savedConfig) {
         setConfig({
           appkey: savedConfig.appkey,
@@ -65,7 +36,7 @@ export function ASRConfigCard() {
       
       // 检查是否有有效配置
       const hasValid = savedConfig && savedConfig.appkey.trim() !== '' && savedConfig.token.trim() !== ''
-      setHasValidConfig(hasValid)
+      setHasValidConfig(!!hasValid)
     } catch (error) {
       console.error('Failed to load ASR config:', error)
       setMessage({ type: 'error', text: '加载配置失败' })
@@ -84,11 +55,17 @@ export function ASRConfigCard() {
     setMessage(null)
 
     try {
-      // 使用新的配置工具函数保存配置
-      await updateASRConfig({
-        appkey: config.appkey.trim(),
-        token: config.token.trim()
+      // 使用生成的 API 客户端保存配置
+      const response = await updateAsrConfig({
+        body: {
+          appkey: config.appkey.trim(),
+          token: config.token.trim()
+        }
       })
+      
+      if (response.data?.status !== 'SUCCESS') {
+        throw new Error(response.data?.message || '保存失败')
+      }
       
       setMessage({ type: 'success', text: '语音识别配置已保存到服务端' })
       
@@ -114,7 +91,10 @@ export function ASRConfigCard() {
         token: ''
       })
       
-      await deleteASRConfig()
+      const response = await deleteAsrConfig()
+      if (response.data?.status !== 'SUCCESS') {
+        throw new Error(response.data?.message || '删除失败')
+      }
       setHasValidConfig(false)
       setMessage({ type: 'success', text: '配置已重置' })
       setTimeout(() => setMessage(null), 3000)

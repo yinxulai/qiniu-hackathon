@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ChatData, ChatErrors, ChatResponses, CloseWindowData, CloseWindowErrors, CloseWindowResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, OpenWindowData, OpenWindowErrors, OpenWindowResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
+import type { ChatData, ChatErrors, ChatResponses, CloseWindowData, CloseWindowErrors, CloseWindowResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteAsrConfigData, DeleteAsrConfigErrors, DeleteAsrConfigResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetAsrConfigData, GetAsrConfigErrors, GetAsrConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, OpenWindowData, OpenWindowErrors, OpenWindowResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateAsrConfigData, UpdateAsrConfigErrors, UpdateAsrConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -819,5 +819,101 @@ export const chat = <ThrowOnError extends boolean = false>(options: Options<Chat
             'Content-Type': 'application/json',
             ...options.headers
         }
+    });
+};
+
+/**
+ * 获取 ASR 配置
+ *
+ *
+ * 获取当前 ASR 语音识别配置
+ *
+ * **功能说明：**
+ * - 获取当前保存的阿里云语音识别服务配置
+ * - 包含 AppKey 和 Token 等必要的连接信息
+ * - 如果未配置则返回 null
+ *
+ * **返回信息包括：**
+ * - appkey: 阿里云语音识别 AppKey
+ * - token: 阿里云语音识别 Token
+ * - updatedAt: 最后更新时间
+ *
+ * **使用场景：**
+ * - 设置界面显示当前配置状态
+ * - 语音识别服务初始化时获取配置
+ * - 验证配置是否已正确设置
+ *
+ */
+export const getAsrConfig = <ThrowOnError extends boolean = false>(options?: Options<GetAsrConfigData, ThrowOnError>) => {
+    return (options?.client ?? client).post<GetAsrConfigResponses, GetAsrConfigErrors, ThrowOnError>({
+        url: '/asr/config/get',
+        ...options
+    });
+};
+
+/**
+ * 更新 ASR 配置
+ *
+ *
+ * 更新 ASR 语音识别配置
+ *
+ * **功能说明：**
+ * - 更新阿里云语音识别服务的连接配置
+ * - 支持 AppKey 和 Token 的修改
+ * - 自动更新配置的修改时间戳
+ * - 配置更新后立即生效
+ *
+ * **配置参数：**
+ * - **appkey**: 阿里云语音识别 AppKey，在阿里云控制台获取
+ * - **token**: 阿里云语音识别 Token，用于服务认证
+ *
+ * **注意事项：**
+ * - AppKey 和 Token 必须与阿里云账户匹配
+ * - 建议在阿里云控制台验证配置的有效性
+ * - 配置更新后需要重新连接语音识别服务
+ *
+ * **使用场景：**
+ * - 初始化设置语音识别服务
+ * - 更新过期或失效的认证信息
+ * - 切换不同的阿里云账户配置
+ *
+ */
+export const updateAsrConfig = <ThrowOnError extends boolean = false>(options: Options<UpdateAsrConfigData, ThrowOnError>) => {
+    return (options.client ?? client).post<UpdateAsrConfigResponses, UpdateAsrConfigErrors, ThrowOnError>({
+        url: '/asr/config/update',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 删除 ASR 配置
+ *
+ *
+ * 删除 ASR 语音识别配置
+ *
+ * **功能说明：**
+ * - 删除当前保存的阿里云语音识别配置
+ * - 清除所有相关的认证信息
+ * - 删除后语音识别功能将使用默认配置或进入 Mock 模式
+ *
+ * **删除后的效果：**
+ * - AppKey 和 Token 信息被完全清除
+ * - 语音识别服务将无法正常连接
+ * - 需要重新配置才能恢复语音功能
+ *
+ * **使用场景：**
+ * - 重置语音识别配置
+ * - 清除敏感的认证信息
+ * - 切换到其他语音识别服务前的清理
+ *
+ */
+export const deleteAsrConfig = <ThrowOnError extends boolean = false>(options?: Options<DeleteAsrConfigData, ThrowOnError>) => {
+    return (options?.client ?? client).post<DeleteAsrConfigResponses, DeleteAsrConfigErrors, ThrowOnError>({
+        url: '/asr/config/delete',
+        ...options
     });
 };

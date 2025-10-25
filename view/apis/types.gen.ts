@@ -2221,3 +2221,242 @@ export type ChatResponses = {
 };
 
 export type ChatResponse = ChatResponses[keyof ChatResponses];
+
+export type GetAsrConfigData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/asr/config/get';
+};
+
+export type GetAsrConfigErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type GetAsrConfigError = GetAsrConfigErrors[keyof GetAsrConfigErrors];
+
+export type GetAsrConfigResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 阿里云语音识别 AppKey
+             */
+            appkey: string;
+            /**
+             * 阿里云语音识别 Token
+             */
+            token: string;
+            /**
+             * 最后更新时间
+             */
+            updatedAt?: string;
+        } | null;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type GetAsrConfigResponse = GetAsrConfigResponses[keyof GetAsrConfigResponses];
+
+export type UpdateAsrConfigData = {
+    body: {
+        /**
+         * 阿里云语音识别 AppKey
+         */
+        appkey: string;
+        /**
+         * 阿里云语音识别 Token
+         */
+        token: string;
+    };
+    path?: never;
+    query?: never;
+    url: '/asr/config/update';
+};
+
+export type UpdateAsrConfigErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type UpdateAsrConfigError = UpdateAsrConfigErrors[keyof UpdateAsrConfigErrors];
+
+export type UpdateAsrConfigResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 阿里云语音识别 AppKey
+             */
+            appkey: string;
+            /**
+             * 阿里云语音识别 Token
+             */
+            token: string;
+            /**
+             * 最后更新时间
+             */
+            updatedAt?: string;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type UpdateAsrConfigResponse = UpdateAsrConfigResponses[keyof UpdateAsrConfigResponses];
+
+export type DeleteAsrConfigData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/asr/config/delete';
+};
+
+export type DeleteAsrConfigErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type DeleteAsrConfigError = DeleteAsrConfigErrors[keyof DeleteAsrConfigErrors];
+
+export type DeleteAsrConfigResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type DeleteAsrConfigResponse = DeleteAsrConfigResponses[keyof DeleteAsrConfigResponses];
