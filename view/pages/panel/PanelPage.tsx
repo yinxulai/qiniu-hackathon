@@ -1,122 +1,203 @@
-import React, { useEffect, useState } from 'react'
-import { clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import { hideWindow } from '../../apis/sdk.gen.js'
-
-function cn(...inputs: any[]) {
-  return twMerge(clsx(inputs))
-}
+import React, { useState, useEffect } from 'react'
+import { createTask, listTasks, chat } from '../../apis/sdk.gen.js'
+import type { ListTasksResponse } from '../../apis/types.gen.js'
+import InputPanel from './widgets/InputPanel.js'
+import TaskPanel from './widgets/TaskPanel.js'
 
 interface PanelPageProps {}
 
+type Task = {
+  id: string
+  title: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  progress: number
+  steps: Array<{
+    id: string
+    title: string
+    status: 'completed' | 'failed' | 'cancelled' | 'processing'
+    createdAt?: string
+    updatedAt?: string
+  }>
+  subtasks: Array<{
+    id: string
+    title: string
+    status: 'pending' | 'in-progress' | 'completed'
+  }>
+  createdAt?: string
+  updatedAt?: string
+}
+
 function PanelPage({}: PanelPageProps) {
-  const [isVoiceActivated, setIsVoiceActivated] = useState(false)
-  const [isListening, setIsListening] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [chatResponse, setChatResponse] = useState<string>('')
+  const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
 
+  // 添加消息到聊天历史
+  const addToChatHistory = (role: 'user' | 'assistant', content: string) => {
+    setChatHistory(prev => [...prev, { role, content, timestamp: new Date() }])
+  }
+
+  // 计算任务进度
+  const calculateProgress = (steps: Task['steps']): number => {
+    if (steps.length === 0) return 0
+    const completedSteps = steps.filter(step => step.status === 'completed')
+    return Math.round((completedSteps.length / steps.length) * 100)
+  }
+
+  // 映射后端步骤状态到前端状态
+  const mapStepStatus = (status: 'completed' | 'failed' | 'cancelled' | 'processing'): 'pending' | 'in-progress' | 'completed' => {
+    switch (status) {
+      case 'completed': return 'completed'
+      case 'processing': return 'in-progress'
+      case 'failed':
+      case 'cancelled':
+      default:
+        return 'pending'
+    }
+  }
+
+  // 加载任务列表
+  const loadTasks = async () => {
+    try {
+      const response = await listTasks()
+      if (response.data?.data?.list) {
+        // 转换API数据格式为组件所需格式
+        const convertedTasks: Task[] = response.data.data.list.map(task => ({
+          ...task,
+          status: task.steps.every(step => step.status === 'completed') ? 'completed' :
+                  task.steps.some(step => step.status === 'processing') ? 'processing' :
+                  task.steps.some(step => step.status === 'failed') ? 'failed' : 'pending',
+          progress: calculateProgress(task.steps),
+          subtasks: task.steps.map(step => ({
+            id: step.id,
+            title: step.title,
+            status: mapStepStatus(step.status)
+          }))
+        }))
+        setTasks(convertedTasks)
+      }
+    } catch (error) {
+      console.error('Failed to load tasks:', error)
+    }
+  }
+
+  // 开始轮询任务状态
+  const startTaskPolling = () => {
+    const interval = setInterval(async () => {
+      await loadTasks()
+      
+      // 检查是否所有任务都完成
+      const currentTasks = await listTasks()
+      if (currentTasks.data?.data?.list) {
+        const allCompleted = currentTasks.data.data.list.every(task => 
+          task.steps.every(step => step.status === 'completed')
+        )
+        if (allCompleted && currentTasks.data.data.list.length > 0) {
+          clearInterval(interval)
+          setTimeout(() => {
+            setTasks([])
+            setIsProcessing(false)
+          }, 3000)
+        }
+      }
+    }, 1000) // 每秒轮询一次
+
+    // 10秒后停止轮询（防止无限轮询）
+    setTimeout(() => {
+      clearInterval(interval)
+      setIsProcessing(false)
+    }, 10000)
+  }
+
+  // 处理用户输入
+  const handleInputSubmit = async (input: string, type: 'voice' | 'text') => {
+    setIsProcessing(true)
+
+    try {
+      console.log(`Processing ${type} input:`, input)
+
+      // 1. 添加用户消息到历史记录
+      addToChatHistory('user', input)
+
+      // 2. 构建包含历史记录的消息列表
+      const messages = [
+        ...chatHistory.map(msg => ({ role: msg.role, content: msg.content })),
+        { role: 'user' as const, content: input }
+      ]
+
+      // 3. 与AI对话
+      const chatResult = await chat({
+        body: { messages }
+      })
+
+      if (chatResult.error) {
+        throw new Error(chatResult.error.message || 'Chat failed')
+      }
+
+      // 4. 保存AI响应内容
+      if (chatResult.data?.data?.content) {
+        const aiContent = chatResult.data.data.content
+        setChatResponse(aiContent)
+        addToChatHistory('assistant', aiContent)
+        console.log('AI Response:', aiContent)
+      }
+
+      // 5. 等待一会儿让AI处理任务
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // 6. 获取最新的任务列表
+      await loadTasks()
+
+      // 7. 开始轮询任务状态更新
+      startTaskPolling()
+
+    } catch (error) {
+      console.error('Processing error:', error)
+      // 显示错误信息给用户
+      const errorMsg = `处理失败: ${error instanceof Error ? error.message : '未知错误'}`
+      setChatResponse(errorMsg)
+      addToChatHistory('assistant', errorMsg)
+    } finally {
+      // 如果没有任务被创建，立即停止处理状态
+      setTimeout(() => {
+        if (tasks.length === 0) {
+          setIsProcessing(false)
+        }
+      }, 2000)
+    }
+  }
+
+  // 处理任务完成
+  const handleTaskComplete = () => {
+    setTasks([])
+    setIsProcessing(false)
+    setChatResponse('')
+    // 保留聊天历史记录，不清除
+  }
+
+  // 组件加载时获取初始任务列表
   useEffect(() => {
-    // 监听语音激活事件
-    const handleVoiceActivation = () => {
-      setIsVoiceActivated(true)
-      setTimeout(() => setIsVoiceActivated(false), 2000) // 2秒后重置状态
-    }
-
-    window.electronAPI?.onVoiceActivation?.(handleVoiceActivation)
-
-    return () => {
-      window.electronAPI?.removeVoiceActivationListener?.()
-    }
+    loadTasks()
   }, [])
 
-  const handleVoiceInput = () => {
-    setIsListening(!isListening)
-    // 这里可以添加语音识别逻辑
-  }
-
-  const handleTextInput = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const target = e.target as HTMLInputElement
-      if (target.value.trim()) {
-        // 处理文本输入
-        console.log('Text input:', target.value)
-        target.value = ''
-      }
-    }
-  }
-
   return (
-    <div className="h-screen w-full bg-white/5 backdrop-blur-xl flex flex-col">
-      {/* 头部区域 - 拖动区域 */}
-      <div className="drag-region h-8 flex items-center justify-center shrink-0">
-        <div className="text-white/60 text-xs font-medium">Voice Assistant</div>
-      </div>
-
+    <div className="h-screen w-full bg-transparent flex flex-col relative overflow-hidden">
       {/* 主要内容区域 */}
-      <div className="flex-1 p-4 flex flex-col">
-        {/* NAME 头像区域 */}
-        <div className="flex justify-center mb-6">
-          <div className={cn(
-            "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300",
-            isVoiceActivated
-              ? "bg-blue-500/80 scale-110 shadow-lg shadow-blue-500/50"
-              : "bg-white/10 hover:bg-white/15"
-          )}>
-            <div className="text-white text-2xl">🎙️</div>
-          </div>
-        </div>
+      <div className="flex-1 p-6 flex flex-col gap-6 relative z-10">
+        {/* 输入面板 */}
+        <InputPanel
+          onSubmit={handleInputSubmit}
+          isProcessing={isProcessing}
+          aiResponse={chatResponse}
+        />
 
-        {/* 语音激活状态提示 */}
-        {isVoiceActivated && (
-          <div className="text-center mb-4">
-            <div className="text-white/80 text-sm animate-pulse">在呢</div>
-          </div>
-        )}
-
-        {/* 输入区域 */}
-        <div className="mt-auto">
-          <div className="flex items-center gap-2 p-3 bg-white/10 rounded-lg backdrop-blur-sm">
-            <input
-              type="text"
-              placeholder="输入指令或点击语音按钮..."
-              className="flex-1 bg-transparent text-white placeholder-white/50 outline-none text-sm"
-              onKeyDown={handleTextInput}
-            />
-            <button
-              onClick={handleVoiceInput}
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 no-drag-region",
-                isListening
-                  ? "bg-red-500/80 animate-pulse"
-                  : "bg-white/20 hover:bg-white/30"
-              )}
-            >
-              <div className="text-white text-sm">
-                {isListening ? '⏹️' : '🎤'}
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* 任务分解面板 */}
-        <div className="mt-4 h-32 bg-white/5 rounded-lg p-3 border border-white/10">
-          <div className="text-white/60 text-xs mb-2">任务分解面板</div>
-          <div className="text-white/40 text-xs">等待任务...</div>
-        </div>
-
-        {/* 快捷操作 */}
-        <div className="mt-4 flex gap-2">
-          <button
-            onClick={() => window.location.hash = '/setting'}
-            className="flex-1 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-white/70 text-xs transition-colors no-drag-region"
-          >
-            设置
-          </button>
-          <button
-            onClick={() => hideWindow()}
-            className="flex-1 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-white/70 text-xs transition-colors no-drag-region"
-          >
-            隐藏
-          </button>
-        </div>
+        {/* 任务面板 */}
+        <TaskPanel
+          tasks={tasks}
+          isProcessing={isProcessing}
+          onTaskComplete={handleTaskComplete}
+        />
       </div>
     </div>
   )

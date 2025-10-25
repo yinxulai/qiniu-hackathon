@@ -21,7 +21,7 @@ export function createAutoAgentService(taskService: TaskManageService) {
       id: 'default',
       apiKey: 'sk-cd8ca153d613bcb43042cf6228581e3d840e8782fa653ec87dfdfe980880b0cb',
       baseUrl: 'https://openai.qiniu.com/v1',
-      modelId: 'moonshotai/kimi-k2-0905',
+      modelId: 'claude-3.7-sonnet',
       systemPrompt: '',
     }
   }
