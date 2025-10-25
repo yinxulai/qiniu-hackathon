@@ -54,7 +54,10 @@ createServer()
     console.log('Electron app is starting...')
   })
 
-app.on('ready', () => windowService.createPanelWindow())
+app.on('ready', () => {
+  windowService.createPanelWindow()
+  windowService.createDebugWindow()
+})
 app.on('activate', () => windowService.createPanelWindow())
 
 // 窗口关闭处理 - 开发模式下允许应用退出
