@@ -2,6 +2,7 @@
  * ASR 管理器 - 基于事件的语音识别服务
  */
 import { AliyunASRSDK, ASRStatus, type ASRConfig, type ASREvents as SDKEvents } from './asr-sdk'
+import { getSavedASRConfig, hasValidASRConfig } from './asr-config'
 
 export interface ASREvents {
   /** 连接状态变化 */
@@ -30,10 +31,13 @@ export class ASRManager extends EventTarget {
   constructor(config: Partial<ASRConfig> = {}) {
     super()
     
+    // 从设置面板获取保存的配置
+    const savedConfig = getSavedASRConfig()
+    
     // 默认配置
     this.config = {
-      appkey: 'qXYw03ZUTteWDOuq',
-      token: '5d1430b8e80e4fa497b8e2af3e6b55c9',
+      appkey: savedConfig?.appkey || 'qXYw03ZUTteWDOuq',
+      token: savedConfig?.token || '5d1430b8e80e4fa497b8e2af3e6b55c9',
       sampleRate: 16000,
       format: 'pcm',
       enableIntermediateResult: true,
@@ -62,13 +66,18 @@ export class ASRManager extends EventTarget {
       return
     }
 
-    // 检查配置
-    if (!this.config.appkey || !this.config.token || 
-        this.config.appkey === 'your_aliyun_asr_appkey_here' || 
-        this.config.token === 'your_aliyun_asr_token_here') {
-      console.warn('[ASRManager] Invalid credentials, using mock mode')
+    // 检查是否有有效的配置
+    if (!hasValidASRConfig()) {
+      console.warn('[ASRManager] Invalid or missing ASR configuration, using mock mode')
       this.updateStatus(ASRStatus.CONNECTED)
       return
+    }
+
+    // 重新加载最新的配置
+    const savedConfig = getSavedASRConfig()
+    if (savedConfig) {
+      this.config.appkey = savedConfig.appkey
+      this.config.token = savedConfig.token
     }
 
     try {
@@ -160,6 +169,18 @@ export class ASRManager extends EventTarget {
       await this.stopRecording()
     } else {
       await this.startRecording()
+    }
+  }
+
+  /**
+   * 重新加载配置
+   */
+  reloadConfig(): void {
+    const savedConfig = getSavedASRConfig()
+    if (savedConfig) {
+      this.config.appkey = savedConfig.appkey
+      this.config.token = savedConfig.token
+      console.log('[ASRManager] Configuration reloaded from settings')
     }
   }
 
