@@ -11,6 +11,7 @@ import { createWindowService, createWindowRouter } from './modules/window'
 import { createTaskRouter } from './modules/task-manage/router'
 
 import { config } from './config'
+import { createCors } from './plugins/cors'
 
 // 声明 Vite 环境变量
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
@@ -31,6 +32,7 @@ async function createServer() {
   fastify.setValidatorCompiler(validatorCompiler)
   fastify.setSerializerCompiler(serializerCompiler)
 
+  fastify.register(createCors())
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
   fastify.register(createMcpServerRouter({}))

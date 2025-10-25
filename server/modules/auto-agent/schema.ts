@@ -10,8 +10,6 @@ export const AgentConfigSchema = z.object({
   baseUrl: z.string().url().describe('API 基础 URL'),
   modelId: z.string().min(1).describe('模型 ID'),
   systemPrompt: z.string().optional().describe('系统提示词，用于定义 Agent 的行为和角色'),
-  createdTime: z.string().describe('创建时间'),
-  updatedTime: z.string().describe('更新时间'),
 })
 
 export const MessageSchema = z.object({
@@ -83,4 +81,25 @@ export const ChatStreamSchema = routerSchema({
     messages: z.array(MessageSchema).min(1).describe('对话消息列表'),
   }),
   response: responseSchema(z.any()), // SSE 响应不需要定义具体 schema
+})
+
+const chatDescription = `
+与 Agent 进行对话
+
+**功能说明：**
+- 发送消息给 Agent 并获取完整响应
+- 返回 Agent 生成的完整内容
+`
+
+export const ChatSchema = routerSchema({
+  operationId: 'chat',
+  summary: 'Agent 对话',
+  tags: ['Auto Agent 管理'],
+  description: chatDescription,
+  body: z.object({
+    messages: z.array(MessageSchema).min(1).describe('对话消息列表'),
+  }),
+  response: responseSchema(z.object({
+    content: z.string().describe('Agent 响应内容'),
+  })),
 })

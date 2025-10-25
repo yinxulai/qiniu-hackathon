@@ -72,3 +72,33 @@
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
+
+/* 薄荷流光主题自定义颜色 */
+@theme {
+  --color-mint-50: #f0fdf9;
+  --color-mint-100: #ccfbef;
+  --color-mint-200: #99f6e0;
+  --color-mint-300: #5fedc7;
+  --color-mint-400: #2dd9a9;
+  --color-mint-500: #14c38e;
+  --color-mint-600: #0a9f72;
+  --color-mint-700: #09795c;
+  --color-mint-800: #0c5f4a;
+  --color-mint-900: #0d4e3d;
+}
+
+/* 动画效果 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
