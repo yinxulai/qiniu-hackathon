@@ -8,16 +8,13 @@ import {
   ToggleWindowSchema,
   ReloadWindowSchema,
   QuitAppSchema,
+  OpenWindowSchema,
+  CloseWindowSchema,
 } from './schema'
+import { WindowService } from './service'
 
 export interface WindowRouterOptions {
-  windowService: {
-    showMainWindow: () => boolean
-    hideMainWindow: () => boolean
-    toggleMainWindow: () => boolean
-    reloadMainWindow: () => boolean
-    quit: () => void
-  }
+  windowService: WindowService
 }
 
 export function createWindowRouter(options: WindowRouterOptions): FastifyPluginAsync {
@@ -48,6 +45,20 @@ export function createWindowRouter(options: WindowRouterOptions): FastifyPluginA
     typedApp.post('/window/quit', { schema: QuitAppSchema }, async () => {
       windowService.quit()
       return createSuccessResponse(true)
+    })
+
+    // ==================== 新的通用窗口操作 API ====================
+
+    typedApp.post('/window/open', { schema: OpenWindowSchema }, async (req) => {
+      const { type } = req.body
+      const result = windowService.openWindow(type)
+      return createSuccessResponse(result)
+    })
+
+    typedApp.post('/window/close', { schema: CloseWindowSchema }, async (req) => {
+      const { type } = req.body
+      const result = windowService.closeWindow(type)
+      return createSuccessResponse(result)
     })
   }
 }
