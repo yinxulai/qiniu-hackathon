@@ -12,8 +12,8 @@ export const StepSchema = z.object({
   id: z.string().min(1).describe('步骤唯一标识'),
   title: z.string().min(1).describe('步骤简介'),
   status: StepStatusEnum.describe('步骤状态'),
-  createdAt: z.date().optional().describe('创建时间'),
-  updatedAt: z.date().optional().describe('更新时间')
+  createdAt: z.string().optional().describe('创建时间'),
+  updatedAt: z.string().optional().describe('更新时间')
 })
 
 // 任务 Schema
@@ -21,8 +21,8 @@ export const TaskSchema = z.object({
   id: z.string().min(1).describe('任务唯一标识'),
   title: z.string().min(1).describe('任务简介'),
   steps: z.array(StepSchema).describe('步骤列表'),
-  createdAt: z.date().optional().describe('创建时间'),
-  updatedAt: z.date().optional().describe('更新时间')
+  createdAt: z.string().optional().describe('创建时间'),
+  updatedAt: z.string().optional().describe('更新时间')
 })
 
 // 创建步骤输入 Schema

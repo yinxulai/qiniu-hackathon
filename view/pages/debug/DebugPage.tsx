@@ -1,7 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { chat } from '../../apis'
+import { chat, chatStream, listTasks, getTask, deleteTask, updateStepStatus, getAgentConfig, updateAgentConfig } from '../../apis'
+import type { ListTasksResponse, GetAgentConfigResponse, UpdateAgentConfigData } from '../../apis'
+
+// 从API响应中提取类型
+type Task = NonNullable<ListTasksResponse['data']['list'][0]>
+type Step = Task['steps'][0]
+type StepStatus = Step['status']
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs))
@@ -11,19 +17,32 @@ interface DebugPageProps {}
 
 interface ProcessResult {
   timestamp: string
-  agentPrompt: string
   userInput: string
   response: string
   status: 'success' | 'error' | 'processing'
   duration?: number
   error?: string
+  isStream?: boolean
 }
 
 function DebugPage({}: DebugPageProps) {
   const [userInput, setUserInput] = useState('')
-  const [agentPrompt, setAgentPrompt] = useState('你是一个智能助手，负责回答用户的问题。请根据用户输入提供准确、有帮助的回答。')
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState<ProcessResult[]>([])
+  const [isStreamMode, setIsStreamMode] = useState(false)
+  
+  // 配置相关状态
+  const [agentConfig, setAgentConfig] = useState<any>(null)
+  const [isLoadingConfig, setIsLoadingConfig] = useState(false)
+  const [tempSystemPrompt, setTempSystemPrompt] = useState('')
+  
+  // 任务相关状态
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [isLoadingTasks, setIsLoadingTasks] = useState(false)
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalTasks, setTotalTasks] = useState(0)
+  const pageSize = 10
 
   // 预设提示词
   const presetPrompts = [
@@ -42,21 +61,58 @@ function DebugPage({}: DebugPageProps) {
     {
       name: '写作助手',
       prompt: '你是一个专业的写作助手。请帮助用户改进文本、提供写作建议，或协助创作内容。注重语言的准确性和表达的清晰度。'
+    },
+    {
+      name: '任务助手',
+      prompt: '你是一个任务管理助手，能够帮助用户创建、管理和跟踪任务。你可以将复杂的工作分解为具体的步骤，并跟踪执行进度。'
     }
   ]
 
-  // 从本地存储加载提示词
+  // 初始化加载配置
   useEffect(() => {
-    const savedPrompt = localStorage.getItem('debugAgentPrompt')
-    if (savedPrompt) {
-      setAgentPrompt(savedPrompt)
-    }
+    loadAgentConfig()
+    loadTasks(1)
   }, [])
 
-  // 提示词变化时自动保存
-  useEffect(() => {
-    localStorage.setItem('debugAgentPrompt', agentPrompt)
-  }, [agentPrompt])
+  // 加载 Agent 配置
+  const loadAgentConfig = async () => {
+    setIsLoadingConfig(true)
+    try {
+      const response = await getAgentConfig()
+      if (response.data && response.data.status === 'SUCCESS' && response.data.data) {
+        setAgentConfig(response.data.data)
+        setTempSystemPrompt(response.data.data.systemPrompt || '')
+      } else {
+        console.error('加载配置失败:', response.data?.message)
+      }
+    } catch (error) {
+      console.error('加载配置失败:', error)
+    } finally {
+      setIsLoadingConfig(false)
+    }
+  }
+
+  // 更新系统提示词
+  const updateSystemPrompt = async (prompt: string) => {
+    try {
+      const response = await updateAgentConfig({
+        body: {
+          systemPrompt: prompt
+        }
+      })
+      
+      if (response.data && response.data.status === 'SUCCESS') {
+        setAgentConfig(response.data.data)
+        setTempSystemPrompt(prompt)
+        console.log('系统提示词更新成功')
+      } else {
+        alert('更新失败: ' + (response.data?.message || '未知错误'))
+      }
+    } catch (error) {
+      console.error('更新系统提示词失败:', error)
+      alert('更新失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
 
   // 键盘快捷键处理
   useEffect(() => {
@@ -69,7 +125,87 @@ function DebugPage({}: DebugPageProps) {
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [userInput, agentPrompt, isProcessing])
+  }, [userInput, isProcessing])
+
+  // 加载任务列表
+  const loadTasks = async (page: number = 1) => {
+    setIsLoadingTasks(true)
+    try {
+      const response = await listTasks({
+        body: {
+          page,
+          pageSize
+        }
+      })
+      
+      if (response.data && response.data.status === 'SUCCESS') {
+        setTasks(response.data.data.list)
+        setTotalTasks(response.data.data.total)
+        setCurrentPage(page)
+      } else {
+        console.error('加载任务失败:', response.data?.message)
+      }
+    } catch (error) {
+      console.error('加载任务失败:', error)
+    } finally {
+      setIsLoadingTasks(false)
+    }
+  }
+
+  // 刷新任务列表
+  const refreshTasks = () => {
+    loadTasks(currentPage)
+  }
+
+  // 删除任务
+  const handleDeleteTask = async (taskId: string) => {
+    if (!confirm('确定要删除这个任务吗？')) return
+    
+    try {
+      const response = await deleteTask({
+        body: { id: taskId }
+      })
+      
+      if (response.data && response.data.status === 'SUCCESS') {
+        await loadTasks(currentPage)
+        if (selectedTaskId === taskId) {
+          setSelectedTaskId(null)
+        }
+      } else {
+        alert('删除失败: ' + (response.data?.message || '未知错误'))
+      }
+    } catch (error) {
+      console.error('删除任务失败:', error)
+      alert('删除失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
+  // 更新步骤状态
+  const handleUpdateStepStatus = async (taskId: string, stepId: string, status: StepStatus) => {
+    try {
+      const response = await updateStepStatus({
+        body: {
+          taskId,
+          stepId,
+          status
+        }
+      })
+      
+      if (response.data && response.data.status === 'SUCCESS') {
+        await loadTasks(currentPage)
+      } else {
+        alert('更新状态失败: ' + (response.data?.message || '未知错误'))
+      }
+    } catch (error) {
+      console.error('更新步骤状态失败:', error)
+      alert('更新状态失败: ' + (error instanceof Error ? error.message : '未知错误'))
+    }
+  }
+
+  // 初始化加载任务
+  useEffect(() => {
+    loadTasks(1)
+  }, [])
 
   // 处理AI响应的函数
   const processInput = async () => {
@@ -84,10 +220,10 @@ function DebugPage({}: DebugPageProps) {
     // 创建新的处理记录
     const newResult: ProcessResult = {
       timestamp: new Date().toLocaleTimeString(),
-      agentPrompt: agentPrompt,
       userInput: userInput,
       response: '',
-      status: 'processing'
+      status: 'processing',
+      isStream: isStreamMode
     }
     
     setResults(prev => [newResult, ...prev])
@@ -96,41 +232,62 @@ function DebugPage({}: DebugPageProps) {
       // 构建消息数组
       const messages = [
         {
-          role: 'system' as const,
-          content: agentPrompt
-        },
-        {
           role: 'user' as const,
           content: userInput
         }
       ]
 
-      // 调用真实的 chat API
-      const response = await chat({
-        body: {
-          messages: messages
+      if (isStreamMode) {
+        // 流式处理
+        const response = await chatStream({
+          body: { messages }
+        })
+        
+        const duration = Date.now() - startTime
+        let fullResponse = ''
+        
+        // TODO: 处理 SSE 流式数据
+        // 这里需要根据实际的 SSE 响应格式来处理
+        if (response.data && typeof response.data === 'object') {
+          fullResponse = JSON.stringify(response.data)
+        } else {
+          fullResponse = '流式响应处理中...'
         }
-      })
-      
-      const duration = Date.now() - startTime
-      
-      // 检查响应状态
-      if (response.data && response.data.status === 'SUCCESS') {
-        // 更新结果
+        
         setResults(prev => prev.map((result, index) => 
           index === 0 ? { 
             ...result, 
-            response: response.data!.data.content, 
+            response: fullResponse, 
             status: 'success',
             duration: duration
           } : result
         ))
-        
-        // 清空用户输入
-        setUserInput('')
       } else {
-        throw new Error(response.data?.message || '未知错误')
+        // 非流式处理
+        const response = await chat({
+          body: { messages }
+        })
+        
+        const duration = Date.now() - startTime
+        
+        // 检查响应状态
+        if (response.data && response.data.status === 'SUCCESS') {
+          // 更新结果
+          setResults(prev => prev.map((result, index) => 
+            index === 0 ? { 
+              ...result, 
+              response: response.data!.data.content, 
+              status: 'success',
+              duration: duration
+            } : result
+          ))
+        } else {
+          throw new Error(response.data?.message || '未知错误')
+        }
       }
+      
+      // 清空用户输入
+      setUserInput('')
       
     } catch (error) {
       console.error('Chat API error:', error)
@@ -159,7 +316,7 @@ function DebugPage({}: DebugPageProps) {
   const exportResults = () => {
     const data = {
       exportTime: new Date().toISOString(),
-      agentPrompt: agentPrompt,
+      agentConfig: agentConfig,
       results: results
     }
     
@@ -193,7 +350,7 @@ function DebugPage({}: DebugPageProps) {
 
       {/* 主要内容 */}
       <div className="flex-1 p-6 overflow-auto">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="max-w-7xl mx-auto grid grid-cols-1 xl:grid-cols-3 gap-6">
           
           {/* 左侧：输入区域 */}
                     {/* 左侧：输入区域 */}
@@ -203,16 +360,21 @@ function DebugPage({}: DebugPageProps) {
               <div className="mb-4">
                 <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
                   <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  Agent 提示词
+                  系统提示词
+                  {isLoadingConfig && (
+                    <svg className="w-4 h-4 animate-spin text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
                 </h2>
                 {/* 预设提示词按钮 */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {presetPrompts.map((preset, index) => (
                     <button
                       key={index}
-                      onClick={() => setAgentPrompt(preset.prompt)}
+                      onClick={() => setTempSystemPrompt(preset.prompt)}
                       className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs rounded-md transition-colors border border-blue-200"
                     >
                       {preset.name}
@@ -221,29 +383,64 @@ function DebugPage({}: DebugPageProps) {
                 </div>
               </div>
               <textarea
-                value={agentPrompt}
-                onChange={(e) => setAgentPrompt(e.target.value)}
-                placeholder="输入 Agent 的系统提示词，定义AI助手的角色和行为..."
+                value={tempSystemPrompt}
+                onChange={(e) => setTempSystemPrompt(e.target.value)}
+                placeholder="输入系统提示词，定义AI助手的角色和行为..."
                 className="w-full h-48 p-4 bg-gray-50 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
               />
               <div className="mt-2 flex justify-between items-center">
                 <div className="text-xs text-gray-500">
-                  字符数: {agentPrompt.length}
+                  字符数: {tempSystemPrompt.length}
                 </div>
-                <div className="text-xs text-green-600">
-                  ✓ 自动保存
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => updateSystemPrompt(tempSystemPrompt)}
+                    disabled={isLoadingConfig || tempSystemPrompt === (agentConfig?.systemPrompt || '')}
+                    className={cn(
+                      "px-3 py-1 text-xs rounded-md transition-colors border",
+                      isLoadingConfig || tempSystemPrompt === (agentConfig?.systemPrompt || '')
+                        ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-green-50 hover:bg-green-100 text-green-600 border-green-200"
+                    )}
+                  >
+                    {isLoadingConfig ? '更新中...' : '保存配置'}
+                  </button>
+                  <div className="text-xs text-blue-600">
+                    ✓ 使用服务器配置
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* 测试用户输入 */}
             <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-              <h2 className="text-lg font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                测试用户输入
-              </h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  测试用户输入
+                </h2>
+                {/* 流式模式切换 */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">流式模式</span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={isStreamMode}
+                      onChange={(e) => setIsStreamMode(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                  </label>
+                  <span className={cn(
+                    "text-xs px-2 py-1 rounded-full",
+                    isStreamMode ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
+                  )}>
+                    {isStreamMode ? '开启' : '关闭'}
+                  </span>
+                </div>
+              </div>
               <textarea
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
@@ -271,6 +468,8 @@ function DebugPage({}: DebugPageProps) {
                     ? "bg-yellow-50 text-yellow-600 border border-yellow-200 cursor-not-allowed"
                     : !userInput.trim()
                     ? "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed"
+                    : isStreamMode
+                    ? "bg-purple-500 hover:bg-purple-600 text-white shadow-lg hover:shadow-purple-500/25 transform hover:scale-[1.02] active:scale-[0.98]"
                     : "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-blue-500/25 transform hover:scale-[1.02] active:scale-[0.98]"
                 )}
               >
@@ -283,14 +482,181 @@ function DebugPage({}: DebugPageProps) {
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    {isStreamMode ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16l13-8L7 4z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    )}
+                    {isStreamMode ? '开始流式处理' : '开始处理'}
+                  </>
+                )}
+              </button>
+              {/* 模式提示 */}
+              <div className="mt-3 text-center">
+                <span className={cn(
+                  "text-xs px-3 py-1 rounded-full",
+                  isStreamMode 
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-blue-100 text-blue-700"
+                )}>
+                  {isStreamMode ? '🔄 流式模式：实时响应' : '⚡ 标准模式：完整响应'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* 中间：任务管理区域 */}
+          <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
+                <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                任务管理
+                <span className="text-sm text-gray-500">({totalTasks})</span>
+              </h2>
+              <button
+                onClick={refreshTasks}
+                disabled={isLoadingTasks}
+                className={cn(
+                  "px-3 py-1 rounded-md text-sm transition-colors border",
+                  isLoadingTasks
+                    ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "bg-purple-50 hover:bg-purple-100 text-purple-600 border-purple-200"
+                )}
+              >
+                {isLoadingTasks ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
-                    开始处理
+                    刷新中...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    刷新
                   </>
                 )}
               </button>
             </div>
+
+            <div className="space-y-4 max-h-[600px] overflow-auto">
+              {tasks.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <svg className="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  <p>暂无任务</p>
+                  <p className="text-sm mt-1">当前没有任何任务</p>
+                </div>
+              ) : (
+                tasks.map((task) => (
+                  <div key={task.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-800 mb-1">{task.title}</h3>
+                        <div className="text-xs text-gray-500">
+                          {task.createdAt && new Date(task.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteTask(task.id)}
+                        className="ml-2 p-1 text-red-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="删除任务"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    {task.steps && task.steps.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="text-sm font-medium text-gray-700 mb-2">步骤进度:</div>
+                        {task.steps.map((step) => (
+                          <div key={step.id} className="flex items-center justify-between bg-white rounded p-2 border border-gray-200">
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                "w-2 h-2 rounded-full",
+                                step.status === 'completed' ? 'bg-green-500' :
+                                step.status === 'failed' ? 'bg-red-500' :
+                                step.status === 'cancelled' ? 'bg-gray-400' :
+                                'bg-yellow-500'
+                              )} />
+                              <span className="text-sm text-gray-800">{step.title}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className={cn(
+                                "text-xs px-2 py-1 rounded-full",
+                                step.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                step.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                step.status === 'cancelled' ? 'bg-gray-100 text-gray-700' :
+                                'bg-yellow-100 text-yellow-700'
+                              )}>
+                                {step.status === 'completed' ? '已完成' :
+                                 step.status === 'failed' ? '失败' :
+                                 step.status === 'cancelled' ? '已取消' : '处理中'}
+                              </span>
+                              {step.status === 'processing' && (
+                                <button
+                                  onClick={() => handleUpdateStepStatus(task.id, step.id, 'completed')}
+                                  className="ml-1 text-xs px-2 py-1 bg-green-50 hover:bg-green-100 text-green-600 rounded transition-colors border border-green-200"
+                                  title="标记为完成"
+                                >
+                                  完成
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* 分页 */}
+            {totalTasks > pageSize && (
+              <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+                <div>
+                  显示 {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, totalTasks)} 条，共 {totalTasks} 条
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => loadTasks(currentPage - 1)}
+                    disabled={currentPage <= 1 || isLoadingTasks}
+                    className={cn(
+                      "px-3 py-1 rounded border transition-colors",
+                      currentPage <= 1 || isLoadingTasks
+                        ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                    )}
+                  >
+                    上一页
+                  </button>
+                  <button
+                    onClick={() => loadTasks(currentPage + 1)}
+                    disabled={currentPage * pageSize >= totalTasks || isLoadingTasks}
+                    className={cn(
+                      "px-3 py-1 rounded border transition-colors",
+                      currentPage * pageSize >= totalTasks || isLoadingTasks
+                        ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                        : "bg-white hover:bg-gray-50 text-gray-700 border-gray-300"
+                    )}
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 右侧：结果显示区域 */}
@@ -333,11 +699,16 @@ function DebugPage({}: DebugPageProps) {
                 results.map((result, index) => (
                   <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                     <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-3">
                         <span className="text-xs text-gray-500">{result.timestamp}</span>
                         {result.duration && (
                           <span className="text-xs text-gray-400">
                             • {result.duration}ms
+                          </span>
+                        )}
+                        {result.isStream && (
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                            流式
                           </span>
                         )}
                       </div>
@@ -362,9 +733,16 @@ function DebugPage({}: DebugPageProps) {
                       
                       {result.response && (
                         <div>
-                          <div className="text-gray-700 font-medium mb-1">AI 响应:</div>
+                          <div className="text-gray-700 font-medium mb-1 flex items-center gap-2">
+                            AI 响应:
+                            {result.isStream && (
+                              <span className="text-xs text-purple-600">
+                                (流式响应)
+                              </span>
+                            )}
+                          </div>
                           <div className={cn(
-                            "p-3 rounded border",
+                            "p-3 rounded border whitespace-pre-wrap",
                             result.status === 'success' ? 'text-green-800 bg-green-50 border-green-200' :
                             result.status === 'error' ? 'text-red-800 bg-red-50 border-red-200' :
                             'text-gray-800 bg-white border-gray-200'

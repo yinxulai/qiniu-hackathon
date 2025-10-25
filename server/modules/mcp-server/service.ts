@@ -2,14 +2,99 @@ import Store from 'electron-store'
 import { v4 as uuidv4 } from 'uuid'
 import { McpServer, McpServerSchema, UpdateMcpServerInput } from './schema'
 import { UserError } from '@taicode/common-base'
+import { config } from '@server/config'
 
 const store = new Store<{ servers: McpServer[] }>({
   name: 'mcp-servers',
-  defaults: { servers: [] },
+  defaults: {
+    servers: [
+      {
+        "id": "playwright/mcp",
+        "name": "playwright",
+        "transport": "stdio",
+        "enabled": true,
+        "config": {
+          "command": "npx",
+          "args": [
+            "@playwright/mcp@latest"
+          ]
+        }
+      },
+      {
+        "id": "desktop-commander",
+        "name": "desktop-commander",
+        "transport": "stdio",
+        "enabled": true,
+        "config": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "@wonderwhy-er/desktop-commander@latest"
+          ]
+        }
+      },
+      {
+        "id": "self-server-mcp",
+        "name": "self-server-mcp",
+        "transport": "stdio",
+        "enabled": true,
+        "config": {
+          "command": "npx",
+          "args": ["-y", "@ivotoby/openapi-mcp-server"],
+          "env": {
+            "API_BASE_URL": `http://localhost:${config.port}`,
+            "OPENAPI_SPEC_PATH": `http://localhost:${config.port}/openapi.json`
+          }
+        }
+      }
+    ]
+  },
 })
 
 export function createMcpServerService() {
   function listMcp(): McpServer[] {
+    // return [
+    //   {
+    //     "id": "playwright/mcp",
+    //     "name": "playwright",
+    //     "transport": "stdio",
+    //     "enabled": true,
+    //     "config": {
+    //       "command": "npx",
+    //       "args": [
+    //         "@playwright/mcp@latest"
+    //       ]
+    //     }
+    //   },
+    //   {
+    //     "id": "desktop-commander",
+    //     "name": "desktop-commander",
+    //     "transport": "stdio",
+    //     "enabled": true,
+    //     "config": {
+    //       "command": "npx",
+    //       "args": [
+    //         "-y",
+    //         "@wonderwhy-er/desktop-commander@latest"
+    //       ]
+    //     }
+    //   },
+    //   {
+    //     "id": "self-server-mcp",
+    //     "name": "self-server-mcp",
+    //     "transport": "stdio",
+    //     "enabled": true,
+    //     "config": {
+    //       "command": "npx",
+    //       "args": ["-y", "@ivotoby/openapi-mcp-server"],
+    //       "env": {
+    //         "API_BASE_URL": `http://localhost:${config.port}`,
+    //         "OPENAPI_SPEC_PATH": `http://localhost:${config.port}/openapi.json`
+    //       }
+    //     }
+    //   }
+    // ]
+
     const data = store.get('servers', [])
     return data.map(server => McpServerSchema.parse(server)) // 验证数据
   }

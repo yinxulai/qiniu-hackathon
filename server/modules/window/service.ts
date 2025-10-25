@@ -227,6 +227,11 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       debugWindow.show()
     })
 
+    // 只在开发模式下打开 DevTools
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      debugWindow.webContents.openDevTools()
+    }
+
     return debugWindow
   }
 

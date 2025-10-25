@@ -174,60 +174,20 @@ export const deleteMcpServer = <ThrowOnError extends boolean = false>(options: O
 };
 
 /**
- * 获取 Agent 配置
+ * 创建任务
  *
  *
- * 获取当前 Agent 配置
- *
- * **功能说明：**
- * - 获取当前激活的 Agent 配置信息
- * - 包括 API Key、Base URL 和 Model ID
- *
- */
-export const getAgentConfig = <ThrowOnError extends boolean = false>(options?: Options<GetAgentConfigData, ThrowOnError>) => {
-    return (options?.client ?? client).post<GetAgentConfigResponses, GetAgentConfigErrors, ThrowOnError>({
-        url: '/autoAgent/getConfig',
-        ...options
-    });
-};
-
-/**
- * 更新 Agent 配置
- *
- *
- * 更新 Agent 配置
+ * 创建新任务
  *
  * **功能说明：**
- * - 更新 Agent 的 API 配置信息
- * - 支持部分字段更新
- * - 自动更新时间戳
+ * - 创建一个新的任务，包含任务简介和步骤列表
+ * - 步骤初始状态为"处理中"
+ * - 自动生成任务ID和时间戳
  *
  */
-export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?: Options<UpdateAgentConfigData, ThrowOnError>) => {
-    return (options?.client ?? client).post<UpdateAgentConfigResponses, UpdateAgentConfigErrors, ThrowOnError>({
-        url: '/autoAgent/updateConfig',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options?.headers
-        }
-    });
-};
-
-/**
- * Agent 对话
- *
- *
- * 与 Agent 进行对话
- *
- * **功能说明：**
- * - 发送消息给 Agent 并获取完整响应
- * - 返回 Agent 生成的完整内容
- *
- */
-export const chat = <ThrowOnError extends boolean = false>(options: Options<ChatData, ThrowOnError>) => {
-    return (options.client ?? client).post<ChatResponses, ChatErrors, ThrowOnError>({
-        url: '/autoAgent/chat',
+export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<CreateTaskResponses, CreateTaskErrors, ThrowOnError>({
+        url: '/autoAgent/task/create',
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -237,20 +197,109 @@ export const chat = <ThrowOnError extends boolean = false>(options: Options<Chat
 };
 
 /**
- * Agent 流式对话
+ * 获取任务列表
  *
  *
- * 与 Agent 进行流式对话
+ * 获取任务列表
  *
  * **功能说明：**
- * - 发送消息给 Agent 并获取流式响应
- * - 支持实时接收 Agent 生成的内容
- * - 使用 Server-Sent Events (SSE) 返回数据流
+ * - 支持分页查询任务列表
+ * - 返回任务总数和当前页数据
  *
  */
-export const chatStream = <ThrowOnError extends boolean = false>(options: Options<ChatStreamData, ThrowOnError>) => {
-    return (options.client ?? client).post<ChatStreamResponses, ChatStreamErrors, ThrowOnError>({
-        url: '/autoAgent/chatStream',
+export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ListTasksResponses, ListTasksErrors, ThrowOnError>({
+        url: '/autoAgent/task/list',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options?.headers
+        }
+    });
+};
+
+/**
+ * 获取任务详情
+ *
+ *
+ * 获取单个任务详情
+ *
+ * **功能说明：**
+ * - 根据任务ID获取任务详细信息
+ * - 包含所有步骤的状态信息
+ *
+ */
+export const getTask = <ThrowOnError extends boolean = false>(options: Options<GetTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<GetTaskResponses, GetTaskErrors, ThrowOnError>({
+        url: '/autoAgent/task/get',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 更新任务
+ *
+ *
+ * 更新任务信息
+ *
+ * **功能说明：**
+ * - 支持部分字段更新
+ * - 可以更新任务简介和步骤列表
+ * - 自动更新时间戳
+ *
+ */
+export const updateTask = <ThrowOnError extends boolean = false>(options: Options<UpdateTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError>({
+        url: '/autoAgent/task/update',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 删除任务
+ *
+ *
+ * 删除任务
+ *
+ * **功能说明：**
+ * - 根据任务ID删除任务
+ * - 删除后无法恢复
+ *
+ */
+export const deleteTask = <ThrowOnError extends boolean = false>(options: Options<DeleteTaskData, ThrowOnError>) => {
+    return (options.client ?? client).post<DeleteTaskResponses, DeleteTaskErrors, ThrowOnError>({
+        url: '/autoAgent/task/delete',
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            ...options.headers
+        }
+    });
+};
+
+/**
+ * 更新步骤状态
+ *
+ *
+ * 更新步骤状态
+ *
+ * **功能说明：**
+ * - 更新指定任务中指定步骤的状态
+ * - 支持完成、失败、取消、处理中四种状态
+ * - 自动更新时间戳
+ *
+ */
+export const updateStepStatus = <ThrowOnError extends boolean = false>(options: Options<UpdateStepStatusData, ThrowOnError>) => {
+    return (options.client ?? client).post<UpdateStepStatusResponses, UpdateStepStatusErrors, ThrowOnError>({
+        url: '/autoAgent/task/updateStepStatus',
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -350,42 +399,38 @@ export const quitApp = <ThrowOnError extends boolean = false>(options?: Options<
 };
 
 /**
- * 创建任务
+ * 获取 Agent 配置
  *
  *
- * 创建新任务
+ * 获取当前 Agent 配置
  *
  * **功能说明：**
- * - 创建一个新的任务，包含任务简介和步骤列表
- * - 步骤初始状态为"处理中"
- * - 自动生成任务ID和时间戳
+ * - 获取当前激活的 Agent 配置信息
+ * - 包括 API Key、Base URL 和 Model ID
  *
  */
-export const createTask = <ThrowOnError extends boolean = false>(options: Options<CreateTaskData, ThrowOnError>) => {
-    return (options.client ?? client).post<CreateTaskResponses, CreateTaskErrors, ThrowOnError>({
-        url: '/task/create',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
+export const getAgentConfig = <ThrowOnError extends boolean = false>(options?: Options<GetAgentConfigData, ThrowOnError>) => {
+    return (options?.client ?? client).post<GetAgentConfigResponses, GetAgentConfigErrors, ThrowOnError>({
+        url: '/autoAgent/getConfig',
+        ...options
     });
 };
 
 /**
- * 获取任务列表
+ * 更新 Agent 配置
  *
  *
- * 获取任务列表
+ * 更新 Agent 配置
  *
  * **功能说明：**
- * - 支持分页查询任务列表
- * - 返回任务总数和当前页数据
+ * - 更新 Agent 的 API 配置信息
+ * - 支持部分字段更新
+ * - 自动更新时间戳
  *
  */
-export const listTasks = <ThrowOnError extends boolean = false>(options?: Options<ListTasksData, ThrowOnError>) => {
-    return (options?.client ?? client).post<ListTasksResponses, ListTasksErrors, ThrowOnError>({
-        url: '/task/list',
+export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?: Options<UpdateAgentConfigData, ThrowOnError>) => {
+    return (options?.client ?? client).post<UpdateAgentConfigResponses, UpdateAgentConfigErrors, ThrowOnError>({
+        url: '/autoAgent/updateConfig',
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -395,19 +440,19 @@ export const listTasks = <ThrowOnError extends boolean = false>(options?: Option
 };
 
 /**
- * 获取任务详情
+ * Agent 对话
  *
  *
- * 获取单个任务详情
+ * 与 Agent 进行对话
  *
  * **功能说明：**
- * - 根据任务ID获取任务详细信息
- * - 包含所有步骤的状态信息
+ * - 发送消息给 Agent 并获取完整响应
+ * - 返回 Agent 生成的完整内容
  *
  */
-export const getTask = <ThrowOnError extends boolean = false>(options: Options<GetTaskData, ThrowOnError>) => {
-    return (options.client ?? client).post<GetTaskResponses, GetTaskErrors, ThrowOnError>({
-        url: '/task/get',
+export const chat = <ThrowOnError extends boolean = false>(options: Options<ChatData, ThrowOnError>) => {
+    return (options.client ?? client).post<ChatResponses, ChatErrors, ThrowOnError>({
+        url: '/autoAgent/chat',
         ...options,
         headers: {
             'Content-Type': 'application/json',
@@ -417,65 +462,20 @@ export const getTask = <ThrowOnError extends boolean = false>(options: Options<G
 };
 
 /**
- * 更新任务
+ * Agent 流式对话
  *
  *
- * 更新任务信息
- *
- * **功能说明：**
- * - 支持部分字段更新
- * - 可以更新任务简介和步骤列表
- * - 自动更新时间戳
- *
- */
-export const updateTask = <ThrowOnError extends boolean = false>(options: Options<UpdateTaskData, ThrowOnError>) => {
-    return (options.client ?? client).post<UpdateTaskResponses, UpdateTaskErrors, ThrowOnError>({
-        url: '/task/update',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * 删除任务
- *
- *
- * 删除任务
+ * 与 Agent 进行流式对话
  *
  * **功能说明：**
- * - 根据任务ID删除任务
- * - 删除后无法恢复
+ * - 发送消息给 Agent 并获取流式响应
+ * - 支持实时接收 Agent 生成的内容
+ * - 使用 Server-Sent Events (SSE) 返回数据流
  *
  */
-export const deleteTask = <ThrowOnError extends boolean = false>(options: Options<DeleteTaskData, ThrowOnError>) => {
-    return (options.client ?? client).post<DeleteTaskResponses, DeleteTaskErrors, ThrowOnError>({
-        url: '/task/delete',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * 更新步骤状态
- *
- *
- * 更新步骤状态
- *
- * **功能说明：**
- * - 更新指定任务中指定步骤的状态
- * - 支持完成、失败、取消、处理中四种状态
- * - 自动更新时间戳
- *
- */
-export const updateStepStatus = <ThrowOnError extends boolean = false>(options: Options<UpdateStepStatusData, ThrowOnError>) => {
-    return (options.client ?? client).post<UpdateStepStatusResponses, UpdateStepStatusErrors, ThrowOnError>({
-        url: '/task/updateStepStatus',
+export const chatStream = <ThrowOnError extends boolean = false>(options: Options<ChatStreamData, ThrowOnError>) => {
+    return (options.client ?? client).post<ChatStreamResponses, ChatStreamErrors, ThrowOnError>({
+        url: '/autoAgent/chatStream',
         ...options,
         headers: {
             'Content-Type': 'application/json',

@@ -1,5 +1,6 @@
 import Store from 'electron-store'
 import { v4 as uuidv4 } from 'uuid'
+import { tool } from "langchain"
 import type { Task, Step, CreateTaskInput, UpdateTaskInput, StepStatus } from './schema'
 import {
   CreateTaskInputSchema,
@@ -25,16 +26,16 @@ export function createTaskService() {
       id: uuidv4(),
       title: stepInput.title,
       status: 'processing' as StepStatus,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     }))
 
     const task: Task = {
       id: taskId,
       title: input.title,
       steps,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
     }
 
     const tasks = store.get('tasks', [])
@@ -46,12 +47,18 @@ export function createTaskService() {
 
   function listTasks(page: number = 1, pageSize: number = 10): { list: Task[], total: number } {
     const tasks = store.get('tasks', [])
+    // 按创建时间倒序排列，最新的在前面
+    const sortedTasks = tasks.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return timeB - timeA
+    })
     const startIndex = (page - 1) * pageSize
     const endIndex = startIndex + pageSize
     
     return {
-      list: tasks.slice(startIndex, endIndex),
-      total: tasks.length,
+      list: sortedTasks.slice(startIndex, endIndex),
+      total: sortedTasks.length,
     }
   }
 
@@ -85,13 +92,13 @@ export function createTaskService() {
           id: existingStep?.id || uuidv4(),
           title: stepInput.title,
           status: existingStep?.status || 'processing' as StepStatus,
-          createdAt: existingStep?.createdAt || now,
-          updatedAt: now,
+          createdAt: existingStep?.createdAt || now.toISOString(),
+          updatedAt: now.toISOString(),
         }
       })
     }
 
-    currentTask.updatedAt = now
+    currentTask.updatedAt = now.toISOString()
     tasks[taskIndex] = currentTask
     store.set('tasks', tasks)
 
@@ -126,8 +133,8 @@ export function createTaskService() {
 
     const now = new Date()
     task.steps[stepIndex]!.status = status
-    task.steps[stepIndex]!.updatedAt = now
-    task.updatedAt = now
+    task.steps[stepIndex]!.updatedAt = now.toISOString()
+    task.updatedAt = now.toISOString()
 
     tasks[taskIndex] = task
     store.set('tasks', tasks)
@@ -137,12 +144,18 @@ export function createTaskService() {
 
   function getTasksByStatus(stepStatus?: StepStatus): Task[] {
     const tasks = store.get('tasks', [])
+    // 按创建时间倒序排列，最新的在前面
+    const sortedTasks = tasks.sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
+      return timeB - timeA
+    })
     
     if (!stepStatus) {
-      return tasks
+      return sortedTasks
     }
 
-    return tasks.filter(task => 
+    return sortedTasks.filter(task => 
       task.steps.some(step => step.status === stepStatus)
     )
   }
@@ -150,91 +163,124 @@ export function createTaskService() {
   function asAgentTools() {
     return [
       // 创建任务工具
-      {
-        name: 'createTask',
-        description: '创建新任务，包含任务简介和步骤列表。步骤初始状态为"处理中"，自动生成任务ID和时间戳。',
-        schema: CreateTaskInputSchema,
-        async invoke(input: CreateTaskInput) {
-          return createTask(input)
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = JSON.parse(input)
+            const result = createTask(parsed)
+            return JSON.stringify(result)
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'createTask',
+          description: '创建新任务，包含任务简介和步骤列表。步骤初始状态为"处理中"，自动生成任务ID和时间戳。参数格式：{"title": "任务标题", "steps": [{"title": "步骤标题"}]}'
         }
-      },
+      ),
 
       // 获取任务列表工具
-      {
-        name: 'listTasks',
-        description: '获取任务列表，支持分页查询。返回任务总数和当前页数据。',
-        schema: z.object({
-          page: z.number().min(1).optional().default(1).describe('页码'),
-          pageSize: z.number().min(1).max(100).optional().default(10).describe('每页数量'),
-        }).optional(),
-        async invoke(input: { page?: number; pageSize?: number } = {}) {
-          return listTasks(input.page, input.pageSize)
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = input ? JSON.parse(input) : {}
+            const result = listTasks(parsed.page, parsed.pageSize)
+            return JSON.stringify(result)
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'listTasks',
+          description: '获取任务列表，支持分页查询。返回任务总数和当前页数据。参数格式：{"page": 1, "pageSize": 10}（可选）'
         }
-      },
+      ),
 
       // 获取单个任务工具
-      {
-        name: 'getTask',
-        description: '根据任务ID获取任务详细信息，包含所有步骤的状态信息。',
-        schema: z.object({
-          id: z.string().min(1).describe('任务ID'),
-        }),
-        async invoke(input: { id: string }) {
-          return getTask(input.id)
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = JSON.parse(input)
+            const result = getTask(parsed.id)
+            return JSON.stringify(result)
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'getTask',
+          description: '根据任务ID获取任务详细信息，包含所有步骤的状态信息。参数格式：{"id": "任务ID"}'
         }
-      },
+      ),
 
       // 更新任务工具
-      {
-        name: 'updateTask',
-        description: '更新任务信息，支持部分字段更新。可以更新任务简介和步骤列表，自动更新时间戳。',
-        schema: z.object({
-          id: z.string().min(1).describe('任务ID'),
-        }).merge(UpdateTaskInputSchema),
-        async invoke(input: { id: string } & UpdateTaskInput) {
-          const { id, ...updates } = input
-          return updateTask(id, updates)
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = JSON.parse(input)
+            const { id, ...updates } = parsed
+            const result = updateTask(id, updates)
+            return JSON.stringify(result)
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'updateTask',
+          description: '更新任务信息，支持部分字段更新。可以更新任务简介和步骤列表，自动更新时间戳。参数格式：{"id": "任务ID", "title": "新标题", "steps": [{"title": "步骤标题"}]}'
         }
-      },
+      ),
 
       // 删除任务工具
-      {
-        name: 'deleteTask',
-        description: '根据任务ID删除任务。删除后无法恢复。',
-        schema: z.object({
-          id: z.string().min(1).describe('任务ID'),
-        }),
-        async invoke(input: { id: string }) {
-          deleteTask(input.id)
-          return { success: true, message: '任务删除成功' }
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = JSON.parse(input)
+            deleteTask(parsed.id)
+            return JSON.stringify({ success: true, message: '任务删除成功' })
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'deleteTask',
+          description: '根据任务ID删除任务。删除后无法恢复。参数格式：{"id": "任务ID"}'
         }
-      },
+      ),
 
       // 更新步骤状态工具
-      {
-        name: 'updateStepStatus',
-        description: '更新指定任务中指定步骤的状态。支持完成、失败、取消、处理中四种状态，自动更新时间戳。',
-        schema: z.object({
-          taskId: z.string().min(1).describe('任务ID'),
-          stepId: z.string().min(1).describe('步骤ID'),
-          status: StepStatusEnum.describe('新的步骤状态'),
-        }),
-        async invoke(input: { taskId: string; stepId: string; status: StepStatus }) {
-          return updateStepStatus(input.taskId, input.stepId, input.status)
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = JSON.parse(input)
+            const result = updateStepStatus(parsed.taskId, parsed.stepId, parsed.status)
+            return JSON.stringify(result)
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'updateStepStatus',
+          description: '更新指定任务中指定步骤的状态。支持完成、失败、取消、处理中四种状态，自动更新时间戳。参数格式：{"taskId": "任务ID", "stepId": "步骤ID", "status": "completed|failed|cancelled|processing"}'
         }
-      },
+      ),
 
       // 根据状态获取任务工具
-      {
-        name: 'getTasksByStatus',
-        description: '根据步骤状态筛选任务列表。如果不指定状态，返回所有任务。',
-        schema: z.object({
-          stepStatus: StepStatusEnum.optional().describe('步骤状态筛选条件'),
-        }).optional(),
-        async invoke(input: { stepStatus?: StepStatus } = {}) {
-          return getTasksByStatus(input.stepStatus)
+      tool(
+        async (input: string) => {
+          try {
+            const parsed = input ? JSON.parse(input) : {}
+            const result = getTasksByStatus(parsed.stepStatus)
+            return JSON.stringify(result)
+          } catch (error) {
+            return `Error: ${error instanceof Error ? error.message : String(error)}`
+          }
+        },
+        {
+          name: 'getTasksByStatus',
+          description: '根据步骤状态筛选任务列表。如果不指定状态，返回所有任务。参数格式：{"stepStatus": "completed|failed|cancelled|processing"}（可选）'
         }
-      },
+      ),
     ]
   }
 

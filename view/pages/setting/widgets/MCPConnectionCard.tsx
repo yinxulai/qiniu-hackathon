@@ -17,6 +17,7 @@ interface MCPServer {
     command?: string
     args?: string[]
     url?: string
+    env?: Record<string, string>
   }
 }
 
@@ -26,6 +27,7 @@ interface CreateServerForm {
   command: string
   args: string
   url: string
+  env: string
 }
 
 export function MCPConnectionCard() {
@@ -38,7 +40,8 @@ export function MCPConnectionCard() {
     transport: 'stdio',
     command: '',
     args: '',
-    url: ''
+    url: '',
+    env: ''
   })
 
   useEffect(() => {
@@ -61,9 +64,31 @@ export function MCPConnectionCard() {
 
   const handleCreate = async () => {
     try {
-      const config = formData.transport === 'stdio'
-        ? { command: formData.command, args: formData.args.split(' ').filter(Boolean) }
-        : { url: formData.url }
+      let config: any
+      if (formData.transport === 'stdio') {
+        config = { 
+          command: formData.command, 
+          args: formData.args.split(' ').filter(Boolean) 
+        }
+        // 处理环境变量
+        if (formData.env.trim()) {
+          try {
+            config.env = JSON.parse(formData.env)
+          } catch (error) {
+            // 如果 JSON 解析失败，尝试简单的键值对格式
+            const envObj: Record<string, string> = {}
+            formData.env.split('\n').forEach(line => {
+              const [key, ...valueParts] = line.split('=')
+              if (key && valueParts.length > 0) {
+                envObj[key.trim()] = valueParts.join('=').trim()
+              }
+            })
+            config.env = envObj
+          }
+        }
+      } else {
+        config = { url: formData.url }
+      }
 
       await createMcpServer({
         body: {
@@ -85,9 +110,31 @@ export function MCPConnectionCard() {
     if (!editingServer) return
 
     try {
-      const config = formData.transport === 'stdio'
-        ? { command: formData.command, args: formData.args.split(' ').filter(Boolean) }
-        : { url: formData.url }
+      let config: any
+      if (formData.transport === 'stdio') {
+        config = { 
+          command: formData.command, 
+          args: formData.args.split(' ').filter(Boolean) 
+        }
+        // 处理环境变量
+        if (formData.env.trim()) {
+          try {
+            config.env = JSON.parse(formData.env)
+          } catch (error) {
+            // 如果 JSON 解析失败，尝试简单的键值对格式
+            const envObj: Record<string, string> = {}
+            formData.env.split('\n').forEach(line => {
+              const [key, ...valueParts] = line.split('=')
+              if (key && valueParts.length > 0) {
+                envObj[key.trim()] = valueParts.join('=').trim()
+              }
+            })
+            config.env = envObj
+          }
+        }
+      } else {
+        config = { url: formData.url }
+      }
 
       await updateMcpServer({
         body: {
@@ -132,12 +179,26 @@ export function MCPConnectionCard() {
 
   const openEditModal = (server: MCPServer) => {
     setEditingServer(server)
+    // 将环境变量转换为 JSON 字符串或简单的键值对格式
+    let envString = ''
+    if (server.config.env) {
+      try {
+        envString = JSON.stringify(server.config.env, null, 2)
+      } catch {
+        // 如果不是有效的 JSON，就用简单格式
+        envString = Object.entries(server.config.env)
+          .map(([key, value]) => `${key}=${value}`)
+          .join('\n')
+      }
+    }
+    
     setFormData({
       name: server.name,
       transport: server.transport,
       command: server.config.command || '',
       args: server.config.args?.join(' ') || '',
-      url: server.config.url || ''
+      url: server.config.url || '',
+      env: envString
     })
     setShowCreateModal(true)
   }
@@ -148,7 +209,8 @@ export function MCPConnectionCard() {
       transport: 'stdio',
       command: '',
       args: '',
-      url: ''
+      url: '',
+      env: ''
     })
     setEditingServer(null)
   }
@@ -369,6 +431,27 @@ export function MCPConnectionCard() {
                           rows={3}
                           className="w-full px-4 py-3 bg-white border-2 border-emerald-200/50 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all outline-none resize-none"
                           placeholder="server.js --port 3000"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-700">
+                          环境变量
+                          <span className="text-gray-500 text-xs ml-2">(可选，JSON格式或键=值格式)</span>
+                        </label>
+                        <textarea
+                          value={formData.env}
+                          onChange={(e) => setFormData({ ...formData, env: e.target.value })}
+                          rows={4}
+                          className="w-full px-4 py-3 bg-white border-2 border-emerald-200/50 rounded-xl focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100 transition-all outline-none resize-none font-mono text-sm"
+                          placeholder={`示例 JSON 格式：
+{
+  "NODE_ENV": "production",
+  "API_KEY": "your-key"
+}
+
+或键=值格式：
+NODE_ENV=production
+API_KEY=your-key`}
                         />
                       </div>
                     </>

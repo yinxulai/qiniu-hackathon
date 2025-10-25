@@ -7,6 +7,7 @@ import { z } from 'zod'
 export const StdioConfigSchema = z.object({
   command: z.string().min(1).describe('可执行文件路径或命令名称'),
   args: z.array(z.string()).describe('命令行参数列表'),
+  env: z.record(z.string(), z.string()).optional().describe('环境变量，键值对形式'),
 })
 
 export const SseConfigSchema = z.object({
