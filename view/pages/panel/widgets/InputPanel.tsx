@@ -4,16 +4,17 @@ interface InputPanelProps {
   onSubmit: (input: string, type: 'voice' | 'text') => void
   isProcessing: boolean
   aiResponse?: string
+  isPolling?: boolean
 }
 
-function InputPanel({ onSubmit, isProcessing, aiResponse }: InputPanelProps) {
+function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: InputPanelProps) {
   const [isVoiceActivated, setIsVoiceActivated] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [textInput, setTextInput] = useState('')
   const [inputHistory, setInputHistory] = useState<string[]>([])
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
 
   // 常用指令建议
   const suggestions = [
@@ -61,19 +62,20 @@ function InputPanel({ onSubmit, isProcessing, aiResponse }: InputPanelProps) {
     })
   }
 
-  const handleTextSubmit = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && textInput.trim() && !isProcessing) {
+    const handleTextSubmit = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey && textInput.trim() && !isProcessing) {
+      e.preventDefault()
       onSubmit(textInput.trim(), 'text')
       addToHistory(textInput.trim())
       setTextInput('')
       setHistoryIndex(-1)
       setShowSuggestions(false)
-    } else if (e.key === 'ArrowUp' && inputHistory.length > 0) {
+    } else if (e.key === 'ArrowUp' && inputHistory.length > 0 && e.ctrlKey) {
       e.preventDefault()
       const newIndex = Math.min(historyIndex + 1, inputHistory.length - 1)
       setHistoryIndex(newIndex)
       setTextInput(inputHistory[newIndex] || '')
-    } else if (e.key === 'ArrowDown') {
+    } else if (e.key === 'ArrowDown' && e.ctrlKey) {
       e.preventDefault()
       if (historyIndex > 0) {
         const newIndex = historyIndex - 1
@@ -110,7 +112,7 @@ function InputPanel({ onSubmit, isProcessing, aiResponse }: InputPanelProps) {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextInput(e.target.value)
     setHistoryIndex(-1)
     setShowSuggestions(false)
@@ -185,7 +187,7 @@ function InputPanel({ onSubmit, isProcessing, aiResponse }: InputPanelProps) {
           {isProcessing && !isListening && (
             <div className="text-mint-600 text-sm font-medium flex items-center justify-center gap-2">
               <div className="w-4 h-4 border-2 border-mint-400 border-t-transparent rounded-full animate-spin"></div>
-              AI正在思考并执行...
+              {isPolling ? 'AI正在执行任务，实时更新中...' : 'AI正在思考并执行...'}
             </div>
           )}
           {isVoiceActivated && !isListening && !isProcessing && (
@@ -201,73 +203,117 @@ function InputPanel({ onSubmit, isProcessing, aiResponse }: InputPanelProps) {
         </div>
       </div>
 
-      {/* AI响应显示区域 - 优化样式 */}
+      {/* AI响应显示区域 - 简化布局 */}
       {aiResponse && (
         <div className="animate-fade-in">
-          <div className="relative p-5 bg-linear-to-br from-mint-50 via-white to-mint-100 border border-mint-200/60 rounded-2xl shadow-lg">
+          <div className="relative bg-linear-to-br from-mint-50 via-white to-mint-100 border border-mint-200/60 rounded-2xl shadow-lg max-h-48 overflow-hidden">
             {/* 装饰性边框光效 */}
             <div className="absolute inset-0 rounded-2xl bg-linear-to-r from-transparent via-mint-300/20 to-transparent"></div>
             
-            <div className="relative flex items-start gap-4">
-              <div className="w-10 h-10 bg-linear-to-br from-mint-500 to-mint-600 rounded-xl flex items-center justify-center shrink-0 shadow-md">
-                <span className="text-white text-lg">🤖</span>
+            <div className="relative p-4 max-h-48 overflow-y-auto custom-scrollbar">
+              {/* 简化的头部 */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="text-mint-700 text-sm font-bold">🤖 AI 助手</div>
+                <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full flex items-center gap-1">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                  在线
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-mint-700 text-base font-bold">AI 助手</div>
-                  <div className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full flex items-center gap-1">
-                    <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                    在线
-                  </div>
-                </div>
-                <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
-                  {aiResponse}
-                </div>
+              
+              {/* 响应内容 */}
+              <div className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word">
+                {aiResponse}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 输入区域 - 全面改进 */}
+      {/* 输入区域 - 优化布局 */}
       <div className="space-y-4">
         {/* 主输入框 */}
         <div className="relative">
           <div className="relative bg-white/95 backdrop-blur-sm rounded-2xl border-2 border-mint-200/50 shadow-lg hover:shadow-xl hover:border-mint-300/60 transition-all duration-300 focus-within:border-mint-400 focus-within:shadow-xl">
-            <div className="flex items-center gap-4 p-4">
-              {/* 输入图标 */}
-              <div className="w-8 h-8 bg-mint-100 rounded-lg flex items-center justify-center shrink-0">
-                <span className="text-mint-600 text-sm">💭</span>
+            {/* 主输入区域 */}
+            <div className="p-4 pb-2">
+              {/* 输入框容器 */}
+              <div className="relative">
+                {/* 输入框 */}
+                <textarea
+                  ref={inputRef}
+                  value={textInput}
+                  onChange={handleInputChange}
+                  onKeyDown={handleTextSubmit}
+                  onFocus={handleInputFocus}
+                  placeholder="告诉我您想要做什么..."
+                  disabled={isProcessing}
+                  rows={3}
+                  className="w-full bg-transparent text-gray-700 placeholder-gray-400 outline-none text-base font-medium resize-none"
+                />
+              </div>
+            </div>
+
+            {/* 底部功能栏 */}
+            <div className="px-4 pb-3 flex items-center justify-between">
+              {/* 左侧快捷键提示和功能按钮 */}
+              <div className="flex items-center gap-3">
+                {/* 快捷键提示 */}
+                <div className="text-xs text-gray-400">
+                  {!textInput ? "Ctrl+↑↓ 历史 · Enter发送 · Shift+Enter换行" : ""}
+                </div>
+                
+                {/* 功能按钮组 - 小型化 */}
+                <div className="flex items-center gap-2">
+                  {/* 语音输入按钮 */}
+                  <button
+                    onClick={handleVoiceInput}
+                    disabled={isProcessing}
+                    title="语音输入"
+                    className={`
+                      group relative w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 no-drag-region
+                      ${isListening
+                        ? "bg-red-500 hover:bg-red-600 text-white shadow-md"
+                        : "bg-mint-100 hover:bg-mint-200 text-mint-600"
+                      }
+                      ${isProcessing ? "opacity-50 cursor-not-allowed" : "hover:scale-105"}
+                    `}
+                  >
+                    <span className="text-sm transition-transform duration-200 group-hover:scale-110">
+                      {isListening ? '⏹' : '🎤'}
+                    </span>
+                    
+                    {/* 语音按钮光环效果 */}
+                    {isListening && (
+                      <div className="absolute inset-0 rounded-lg bg-red-400/30 animate-ping"></div>
+                    )}
+                  </button>
+
+                  {/* 建议按钮 */}
+                  <button
+                    onClick={() => setShowSuggestions(!showSuggestions)}
+                    disabled={isProcessing}
+                    title="常用建议"
+                    className={`
+                      group w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 no-drag-region hover:scale-105 disabled:opacity-50
+                      ${showSuggestions ? "bg-blue-500 text-white" : "bg-mint-100 hover:bg-mint-200 text-mint-600"}
+                    `}
+                  >
+                    <span className="text-sm transition-transform duration-200 group-hover:scale-110">
+                      💡
+                    </span>
+                  </button>
+                </div>
               </div>
               
-              {/* 输入框 */}
-              <input
-                ref={inputRef}
-                type="text"
-                value={textInput}
-                onChange={handleInputChange}
-                onKeyDown={handleTextSubmit}
-                onFocus={handleInputFocus}
-                placeholder="告诉我您想要做什么..."
-                disabled={isProcessing}
-                className="flex-1 bg-transparent text-gray-700 placeholder-gray-400 outline-none text-base font-medium"
-              />
-              
-              {/* 快捷键提示 */}
-              {!textInput && (
-                <div className="text-xs text-gray-400 shrink-0">
-                  ↑↓ 历史 · ⌘K 建议
-                </div>
-              )}
-              
-              {/* 发送按钮 */}
+              {/* 右侧发送按钮 */}
               {textInput.trim() && (
                 <button
                   onClick={handleTextButtonSubmit}
                   disabled={isProcessing}
-                  className="px-4 py-2 bg-mint-500 hover:bg-mint-600 disabled:bg-mint-300 text-white text-sm font-semibold rounded-xl transition-all duration-200 no-drag-region shadow-md hover:shadow-lg hover:scale-105"
+                  className="px-4 py-2 bg-mint-500 hover:bg-mint-600 disabled:bg-mint-300 text-white text-sm font-semibold rounded-lg transition-all duration-200 no-drag-region shadow-md hover:shadow-lg hover:scale-105 flex items-center gap-2"
                 >
-                  发送 ↗
+                  <span>发送</span>
+                  <span className="text-sm">↗</span>
                 </button>
               )}
             </div>
@@ -292,65 +338,6 @@ function InputPanel({ onSubmit, isProcessing, aiResponse }: InputPanelProps) {
               </div>
             </div>
           )}
-        </div>
-
-        {/* 功能按钮组 */}
-        <div className="flex items-center justify-center gap-3">
-          {/* 语音输入按钮 */}
-          <button
-            onClick={handleVoiceInput}
-            disabled={isProcessing}
-            className={`
-              group relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300 no-drag-region shadow-lg hover:shadow-xl
-              ${isListening
-                ? "bg-linear-to-br from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 shadow-red-500/40"
-                : "bg-linear-to-br from-mint-500 to-mint-600 hover:from-mint-600 hover:to-mint-700 shadow-mint-500/40"
-              }
-              ${isProcessing ? "opacity-50 cursor-not-allowed" : "hover:scale-110"}
-            `}
-          >
-            <div className="text-white text-xl transition-transform duration-200 group-hover:scale-110">
-              {isListening ? '⏹️' : '🎤'}
-            </div>
-            
-            {/* 语音按钮光环效果 */}
-            {isListening && (
-              <div className="absolute inset-0 rounded-2xl bg-red-400/30 animate-ping"></div>
-            )}
-          </button>
-
-          {/* 建议按钮 */}
-          <button
-            onClick={() => setShowSuggestions(!showSuggestions)}
-            disabled={isProcessing}
-            className="group w-14 h-14 bg-linear-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-2xl flex items-center justify-center transition-all duration-300 no-drag-region shadow-lg hover:shadow-xl hover:scale-110 disabled:opacity-50"
-          >
-            <div className="text-white text-xl transition-transform duration-200 group-hover:scale-110">
-              💡
-            </div>
-          </button>
-
-          {/* 历史记录按钮 */}
-          {inputHistory.length > 0 && (
-            <button
-              onClick={() => {/* 显示历史记录 */}}
-              disabled={isProcessing}
-              className="group w-14 h-14 bg-linear-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 rounded-2xl flex items-center justify-center transition-all duration-300 no-drag-region shadow-lg hover:shadow-xl hover:scale-110 disabled:opacity-50"
-            >
-              <div className="text-white text-xl transition-transform duration-200 group-hover:scale-110">
-                📚
-              </div>
-            </button>
-          )}
-        </div>
-
-        {/* 使用提示 */}
-        <div className="text-center">
-          <div className="text-xs text-gray-400 space-x-4">
-            <span>🎤 按住语音键说话</span>
-            <span>💡 点击获取建议</span>
-            <span>⌨️ 按Enter发送</span>
-          </div>
         </div>
       </div>
     </div>

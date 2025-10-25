@@ -32,6 +32,8 @@ function PanelPage({}: PanelPageProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [chatResponse, setChatResponse] = useState<string>('')
   const [chatHistory, setChatHistory] = useState<Array<{role: 'user' | 'assistant', content: string, timestamp: Date}>>([])
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null)
+  const [isPolling, setIsPolling] = useState(false)
 
   // 添加消息到聊天历史
   const addToChatHistory = (role: 'user' | 'assistant', content: string) => {
@@ -82,32 +84,73 @@ function PanelPage({}: PanelPageProps) {
     }
   }
 
+  // 停止轮询
+  const stopTaskPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval)
+      setPollingInterval(null)
+      setIsPolling(false)
+      console.log('[POLLING] Task polling stopped')
+    }
+  }
+
   // 开始轮询任务状态
   const startTaskPolling = () => {
-    const interval = setInterval(async () => {
-      await loadTasks()
-      
-      // 检查是否所有任务都完成
-      const currentTasks = await listTasks()
-      if (currentTasks.data?.data?.list) {
-        const allCompleted = currentTasks.data.data.list.every(task => 
-          task.steps.every(step => step.status === 'completed')
-        )
-        if (allCompleted && currentTasks.data.data.list.length > 0) {
-          clearInterval(interval)
-          setTimeout(() => {
-            setTasks([])
-            setIsProcessing(false)
-          }, 3000)
-        }
-      }
-    }, 1000) // 每秒轮询一次
+    // 如果已经在轮询，先停止之前的轮询
+    if (pollingInterval) {
+      stopTaskPolling()
+    }
 
-    // 10秒后停止轮询（防止无限轮询）
+    console.log('[POLLING] Starting task polling...')
+    setIsPolling(true)
+    
+    const interval = setInterval(async () => {
+      try {
+        console.log('[POLLING] Fetching task updates...')
+        await loadTasks()
+        
+        // 检查是否所有任务都完成
+        const currentTasks = await listTasks()
+        if (currentTasks.data?.data?.list) {
+          const activeTasks = currentTasks.data.data.list
+          
+          // 如果没有任务或所有任务都完成了
+          if (activeTasks.length === 0) {
+            console.log('[POLLING] No active tasks, stopping polling')
+            stopTaskPolling()
+            setIsProcessing(false)
+            return
+          }
+          
+          const allCompleted = activeTasks.every(task => 
+            task.steps.every(step => step.status === 'completed')
+          )
+          
+          if (allCompleted) {
+            console.log('[POLLING] All tasks completed, stopping polling in 3 seconds')
+            setTimeout(() => {
+              setTasks([])
+              setIsProcessing(false)
+              stopTaskPolling()
+            }, 3000)
+          }
+        }
+      } catch (error) {
+        console.error('[POLLING] Error during polling:', error)
+        // 轮询出错时不立即停止，继续尝试
+      }
+    }, 2000) // 每2秒轮询一次
+
+    setPollingInterval(interval)
+
+    // 60秒后强制停止轮询（防止无限轮询）
     setTimeout(() => {
-      clearInterval(interval)
-      setIsProcessing(false)
-    }, 10000)
+      if (interval === pollingInterval) {
+        console.log('[POLLING] Timeout reached, stopping polling')
+        stopTaskPolling()
+        setIsProcessing(false)
+      }
+    }, 60000)
   }
 
   // 处理用户输入
@@ -170,15 +213,24 @@ function PanelPage({}: PanelPageProps) {
 
   // 处理任务完成
   const handleTaskComplete = () => {
+    console.log('[TASK] All tasks completed by user action')
     setTasks([])
     setIsProcessing(false)
     setChatResponse('')
+    stopTaskPolling()
     // 保留聊天历史记录，不清除
   }
 
   // 组件加载时获取初始任务列表
   useEffect(() => {
     loadTasks()
+  }, [])
+
+  // 组件卸载时清理轮询
+  useEffect(() => {
+    return () => {
+      stopTaskPolling()
+    }
   }, [])
 
   return (
@@ -190,6 +242,7 @@ function PanelPage({}: PanelPageProps) {
           onSubmit={handleInputSubmit}
           isProcessing={isProcessing}
           aiResponse={chatResponse}
+          isPolling={isPolling}
         />
 
         {/* 任务面板 */}
