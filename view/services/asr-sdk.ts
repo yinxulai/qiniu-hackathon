@@ -229,7 +229,20 @@ export class AliyunASRSDK {
         break;
         
       case 'TranscriptionCompleted':
-        // 转录完成
+        // 转录完成，这时服务端已经处理完所有剩余数据
+        console.log('[AliyunASRSDK] Transcription completed by server');
+        // 如果还有最后的结果，确保它被处理
+        if (payload && payload.result) {
+          const finalResult: ASRResult = {
+            text: payload.result,
+            isFinal: true,
+            confidence: payload.confidence,
+            beginTime: payload.begin_time,
+            endTime: payload.end_time
+          };
+          console.log('[AliyunASRSDK] Final result from completion:', finalResult.text);
+          this.events.onResult?.(finalResult);
+        }
         break;
         
       default:
@@ -275,7 +288,8 @@ export class AliyunASRSDK {
       );
 
       this.scriptProcessor.onaudioprocess = (event) => {
-        if (!this.isRecording || !this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
+        // 即使在停止录音过程中，也要处理最后的音频数据
+        if (!this.websocket || this.websocket.readyState !== WebSocket.OPEN) {
           return;
         }
 
@@ -288,8 +302,12 @@ export class AliyunASRSDK {
           inputData16[i] = Math.max(-1, Math.min(1, sample)) * 0x7FFF;
         }
 
-        // 发送音频数据
-        this.websocket.send(inputData16.buffer);
+        // 发送音频数据，即使在停止过程中也要发送最后的数据
+        try {
+          this.websocket.send(inputData16.buffer);
+        } catch (error) {
+          console.error('[AliyunASRSDK] Failed to send audio data:', error);
+        }
       };
 
       // 连接音频节点
@@ -313,8 +331,49 @@ export class AliyunASRSDK {
       return;
     }
 
+    console.log('[AliyunASRSDK] Stopping recording and sending completion signal...');
+    
+    // 立即标记为停止录音，防止继续发送音频数据
     this.isRecording = false;
+    
+    // 发送音频流结束信号给服务端，让它处理剩余的缓存数据
+    if (this.websocket && this.websocket.readyState === WebSocket.OPEN) {
+      try {
+        const stopMessage = {
+          header: {
+            message_id: this.generateUUID(),
+            task_id: this.taskId,
+            namespace: 'SpeechTranscriber',
+            name: 'StopTranscription',
+            appkey: this.config.appkey
+          }
+        };
+        
+        console.log('[AliyunASRSDK] Sending stop transcription signal');
+        this.websocket.send(JSON.stringify(stopMessage));
+        
+        // 等待一段时间让服务端处理剩余数据，然后再清理资源
+        setTimeout(() => {
+          this.cleanupAudioResources();
+        }, 500); // 给服务端500ms时间处理剩余数据
+        
+      } catch (error) {
+        console.error('[AliyunASRSDK] Failed to send stop signal:', error);
+        // 如果发送失败，直接清理资源
+        this.cleanupAudioResources();
+      }
+    } else {
+      // 如果WebSocket已断开，直接清理资源
+      this.cleanupAudioResources();
+    }
+  }
 
+  /**
+   * 清理音频资源
+   */
+  private cleanupAudioResources(): void {
+    console.log('[AliyunASRSDK] Cleaning up audio resources...');
+    
     // 清理音频资源
     if (this.scriptProcessor) {
       this.scriptProcessor.disconnect();
@@ -338,6 +397,7 @@ export class AliyunASRSDK {
 
     this.updateStatus(ASRStatus.CONNECTED);
     this.events.onRecordingStop?.();
+    console.log('[AliyunASRSDK] Audio resources cleaned up');
   }
 
   /**

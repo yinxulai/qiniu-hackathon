@@ -40,7 +40,7 @@ export class ASRManager extends EventTarget {
       enableIntermediateResult: true,
       enablePunctuationPrediction: true,
       enableInverseTextNormalization: true,
-      bufferSize: 2048,
+      bufferSize: 1024, // 从 2048 减小到1024，获得更低延迟
       ...config
     }
   }
@@ -214,10 +214,15 @@ export class ASRManager extends EventTarget {
       },
       
       onResult: (result) => {
-        console.log('[ASRManager] Final result:', result.text)
+        console.log('[ASRManager] Final result from SDK:', result.text)
         if (result.text && !this.hasSentFinal) {
           this.updateText(result.text)
-          this.setSilenceTimer()
+          // 对于最终结果，不要立即设置静音定时器，而是稍等一下
+          setTimeout(() => {
+            if (!this.hasSentFinal) {
+              this.setSilenceTimer()
+            }
+          }, 100)
         }
       },
       
@@ -242,12 +247,15 @@ export class ASRManager extends EventTarget {
       },
       
       onRecordingStop: () => {
-        console.log('[ASRManager] Recording stopped')
+        console.log('[ASRManager] Recording stopped, waiting for final text processing...')
         this.updateRecording(false)
         this.updateStatus(ASRStatus.CONNECTED)
         
-        // 立即发送最终结果
-        this.sendFinalResult()
+        // 由于SDK现在会发送停止信号并等待服务端完成处理，这里的延迟可以减少
+        setTimeout(() => {
+          console.log('[ASRManager] Sending final result after recording stop delay')
+          this.sendFinalResult()
+        }, 100) // 从300ms减少到100ms，因为SDK层面已经处理了数据同步
       },
       
       onStatusChange: (status) => {
@@ -301,10 +309,11 @@ export class ASRManager extends EventTarget {
   private setSilenceTimer(): void {
     this.clearSilenceTimer()
     
+    // 延长静音检测时间以避免过早截断语音
     this.silenceTimer = setTimeout(() => {
       console.log('[ASRManager] Silence detected, sending final result')
       this.sendFinalResult()
-    }, 3000)
+    }, 3000) // 从 3000 改为 5000毫秒
   }
 
   /**
@@ -329,13 +338,16 @@ export class ASRManager extends EventTarget {
         detail: this._currentText.trim() 
       }))
       
-      // 自动停止录音，等待下次主动唤醒
-      if (this._isRecording) {
-        console.log('[ASRManager] Auto-stopping recording after final result')
-        this.stopRecording().catch((error) => {
-          console.error('[ASRManager] Failed to auto-stop recording:', error)
-        })
-      }
+      // 由于SDK现在正确处理了数据同步，可以减少这里的延迟
+      setTimeout(() => {
+        // 自动停止录音，等待下次主动唤醒
+        if (this._isRecording) {
+          console.log('[ASRManager] Auto-stopping recording after final result')
+          this.stopRecording().catch((error) => {
+            console.error('[ASRManager] Failed to auto-stop recording:', error)
+          })
+        }
+      }, 200) // 从500ms减少到200ms
       
       // 清理状态
       setTimeout(() => {
