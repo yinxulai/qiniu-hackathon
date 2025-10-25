@@ -8,7 +8,7 @@ interface UseASRReturn {
   currentText: string
   startListening: () => Promise<void>
   stopListening: () => void
-  reloadConfig: () => void
+  reloadConfig: () => Promise<void>
 }
 
 export const useASR = (onFinalText?: (text: string) => void): UseASRReturn => {
@@ -109,9 +109,9 @@ export const useASR = (onFinalText?: (text: string) => void): UseASRReturn => {
     }
   }, [])
   
-  const reloadConfig = useCallback(() => {
+  const reloadConfig = useCallback(async () => {
     if (asrManagerRef.current) {
-      asrManagerRef.current.reloadConfig()
+      await asrManagerRef.current.reloadConfig()
     }
   }, [])
 

@@ -31,13 +31,10 @@ export class ASRManager extends EventTarget {
   constructor(config: Partial<ASRConfig> = {}) {
     super()
     
-    // 从设置面板获取保存的配置
-    const savedConfig = getSavedASRConfig()
-    
-    // 默认配置
+    // 默认配置（将在连接时从服务端加载最新配置）
     this.config = {
-      appkey: savedConfig?.appkey || 'qXYw03ZUTteWDOuq',
-      token: savedConfig?.token || '5d1430b8e80e4fa497b8e2af3e6b55c9',
+      appkey: 'qXYw03ZUTteWDOuq', // 默认值，将被服务端配置覆盖
+      token: '5d1430b8e80e4fa497b8e2af3e6b55c9', // 默认值，将被服务端配置覆盖
       sampleRate: 16000,
       format: 'pcm',
       enableIntermediateResult: true,
@@ -67,14 +64,14 @@ export class ASRManager extends EventTarget {
     }
 
     // 检查是否有有效的配置
-    if (!hasValidASRConfig()) {
+    if (!(await hasValidASRConfig())) {
       console.warn('[ASRManager] Invalid or missing ASR configuration, using mock mode')
       this.updateStatus(ASRStatus.CONNECTED)
       return
     }
 
     // 重新加载最新的配置
-    const savedConfig = getSavedASRConfig()
+    const savedConfig = await getSavedASRConfig()
     if (savedConfig) {
       this.config.appkey = savedConfig.appkey
       this.config.token = savedConfig.token
@@ -175,8 +172,8 @@ export class ASRManager extends EventTarget {
   /**
    * 重新加载配置
    */
-  reloadConfig(): void {
-    const savedConfig = getSavedASRConfig()
+  async reloadConfig(): Promise<void> {
+    const savedConfig = await getSavedASRConfig()
     if (savedConfig) {
       this.config.appkey = savedConfig.appkey
       this.config.token = savedConfig.token

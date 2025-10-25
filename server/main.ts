@@ -9,13 +9,13 @@ import { createMcpServerRouter } from './modules/mcp-server/router'
 import { createAutoAgentRouter } from './modules/auto-agent/router'
 import { createWindowService, createWindowRouter } from './modules/window'
 import { createTaskRouter, createTaskService } from './modules/auto-agent/task-manage'
+import { createASRConfigRouter } from './modules/asr-config'
 
 import { config } from './config'
 import { createCors } from './plugins/cors'
 
 // 声明 Vite 环境变量
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined
-declare const MAIN_WINDOW_VITE_NAME: string
 
 if (started) {
   app.quit()
@@ -38,6 +38,7 @@ async function createServer() {
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
   fastify.register(createMcpServerRouter({}))
+  fastify.register(createASRConfigRouter({}))
   fastify.register(createTaskRouter({ taskManageService }))
   fastify.register(createWindowRouter({ windowService }))
   fastify.register(createAutoAgentRouter({ taskManageService }))

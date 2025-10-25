@@ -1,9 +1,39 @@
 import React, { useState, useEffect } from 'react'
-import { getSavedASRConfig, saveASRConfig, clearASRConfig, hasValidASRConfig } from '../../../services/asr-config'
 
 interface ASRConfig {
   appkey: string
   token: string
+}
+
+// API 调用函数
+const getASRConfig = async () => {
+  const response = await fetch('http://localhost:28731/asr/config/get', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  const result = await response.json()
+  return result.success ? result.data : null
+}
+
+const updateASRConfig = async (config: { appkey: string; token: string }) => {
+  const response = await fetch('http://localhost:28731/asr/config/update', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config)
+  })
+  const result = await response.json()
+  if (!result.success) throw new Error(result.message)
+  return result.data
+}
+
+const deleteASRConfig = async () => {
+  const response = await fetch('http://localhost:28731/asr/config/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' }
+  })
+  const result = await response.json()
+  if (!result.success) throw new Error(result.message)
+  return result.data
 }
 
 export function ASRConfigCard() {
@@ -20,18 +50,28 @@ export function ASRConfigCard() {
     loadConfig()
   }, [])
 
-  const loadConfig = () => {
-    // 使用新的配置工具函数加载配置
-    const savedConfig = getSavedASRConfig()
-    if (savedConfig) {
-      setConfig({
-        appkey: savedConfig.appkey,
-        token: savedConfig.token
-      })
+  const loadConfig = async () => {
+    try {
+      setLoading(true)
+      
+      // 使用新的配置工具函数加载配置
+      const savedConfig = await getASRConfig()
+      if (savedConfig) {
+        setConfig({
+          appkey: savedConfig.appkey,
+          token: savedConfig.token
+        })
+      }
+      
+      // 检查是否有有效配置
+      const hasValid = savedConfig && savedConfig.appkey.trim() !== '' && savedConfig.token.trim() !== ''
+      setHasValidConfig(hasValid)
+    } catch (error) {
+      console.error('Failed to load ASR config:', error)
+      setMessage({ type: 'error', text: '加载配置失败' })
+    } finally {
+      setLoading(false)
     }
-    
-    // 检查是否有有效配置
-    setHasValidConfig(hasValidASRConfig())
   }
 
   const saveConfig = async () => {
@@ -45,12 +85,12 @@ export function ASRConfigCard() {
 
     try {
       // 使用新的配置工具函数保存配置
-      saveASRConfig({
+      await updateASRConfig({
         appkey: config.appkey.trim(),
         token: config.token.trim()
       })
       
-      setMessage({ type: 'success', text: '语音识别配置已保存，重新连接后生效' })
+      setMessage({ type: 'success', text: '语音识别配置已保存到服务端' })
       
       // 更新配置状态
       setHasValidConfig(true)
@@ -59,21 +99,31 @@ export function ASRConfigCard() {
       setTimeout(() => setMessage(null), 3000)
     } catch (error) {
       console.error('Failed to save ASR config:', error)
-      setMessage({ type: 'error', text: '保存配置失败' })
+      setMessage({ type: 'error', text: '保存配置失败：' + (error instanceof Error ? error.message : '未知错误') })
     } finally {
       setLoading(false)
     }
   }
 
-  const resetConfig = () => {
-    setConfig({
-      appkey: '',
-      token: ''
-    })
-    clearASRConfig()
-    setHasValidConfig(false)
-    setMessage({ type: 'success', text: '配置已重置' })
-    setTimeout(() => setMessage(null), 3000)
+  const resetConfig = async () => {
+    try {
+      setLoading(true)
+      
+      setConfig({
+        appkey: '',
+        token: ''
+      })
+      
+      await deleteASRConfig()
+      setHasValidConfig(false)
+      setMessage({ type: 'success', text: '配置已重置' })
+      setTimeout(() => setMessage(null), 3000)
+    } catch (error) {
+      console.error('Failed to reset ASR config:', error)
+      setMessage({ type: 'error', text: '重置配置失败：' + (error instanceof Error ? error.message : '未知错误') })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const testConnection = async () => {
@@ -94,7 +144,10 @@ export function ASRConfigCard() {
       
       // 创建临时的 ASRManager 进行测试
       const { ASRManager } = await import('../../../services/asr-manager.js')
-      const testManager = new ASRManager(tempConfig)
+      const testManager = new ASRManager({
+        appkey: tempConfig.appkey,
+        token: tempConfig.token
+      })
       
       // 尝试连接
       await testManager.connect()
