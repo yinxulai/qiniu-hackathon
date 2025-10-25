@@ -2,7 +2,7 @@
  * 阿里云实时语音识别 SDK
  * 基于 WebSocket 的实时语音转文字服务
  * 
- * @author Voice Assistant Team
+ * @author Siwe Team
  * @version 1.0.0
  */
 

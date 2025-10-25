@@ -1,8 +1,8 @@
 {
-  "name": "voice-assistant",
-  "productName": "Voice Assistant",
+  "name": "siwe",
+  "productName": "Siwe",
   "version": "1.0.0",
-  "description": "My Electron application description",
+  "description": "Siwe - 智能语音助手，通过文字和语音控制电脑的智能工具",
   "main": ".vite/build/main.js",
   "scripts": {
     "start": "electron-forge start",
