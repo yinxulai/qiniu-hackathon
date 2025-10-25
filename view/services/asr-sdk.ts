@@ -143,7 +143,9 @@ export class AliyunASRSDK {
             },
             payload: {
               format: this.config.format,
+              speech_noise_threshold: 0.5,
               sample_rate: this.config.sampleRate,
+              enable_semantic_sentence_detection: true,
               enable_intermediate_result: this.config.enableIntermediateResult,
               enable_punctuation_prediction: this.config.enablePunctuationPrediction,
               enable_inverse_text_normalization: this.config.enableInverseTextNormalization
