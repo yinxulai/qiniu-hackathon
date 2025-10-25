@@ -16,49 +16,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   
   // 其他可能需要的 API
-  platform: process.platform,
-  
-  // 窗口控制
-  hideWindow: () => {
-    ipcRenderer.send('hide-window')
-  },
-  
-  showWindow: () => {
-    ipcRenderer.send('show-window')
-  },
-
-  // 创建新窗口
-  createDebugWindow: () => {
-    ipcRenderer.send('create-debug-window')
-  },
-
-  createSettingWindow: () => {
-    ipcRenderer.send('create-setting-window')
-  },
-
-  // 应用控制
-  quitApp: () => {
-    ipcRenderer.send('quit-app')
-  },
-
-  // 导航控制
-  navigateToSettings: () => {
-    ipcRenderer.send('navigate-to-settings')
-  },
-
-  navigateToAbout: () => {
-    ipcRenderer.send('navigate-to-about')
-  },
-
-  // 监听导航事件
-  onNavigate: (callback: (route: string) => void) => {
-    ipcRenderer.on('navigate', (_, route) => callback(route))
-  },
-
-  // 移除导航监听器
-  removeNavigateListener: () => {
-    ipcRenderer.removeAllListeners('navigate')
-  }
+  platform: process.platform
 })
 
 // 类型声明
@@ -68,15 +26,6 @@ declare global {
       onVoiceActivation: (callback: () => void) => void
       removeVoiceActivationListener: () => void
       platform: string
-      hideWindow: () => void
-      showWindow: () => void
-      createDebugWindow: () => void
-      createSettingWindow: () => void
-      quitApp: () => void
-      navigateToSettings: () => void
-      navigateToAbout: () => void
-      onNavigate: (callback: (route: string) => void) => void
-      removeNavigateListener: () => void
     }
   }
 }

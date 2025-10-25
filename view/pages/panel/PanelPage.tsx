@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { hideWindow } from '../../apis/sdk.gen.js'
 
 function cn(...inputs: any[]) {
   return twMerge(clsx(inputs))
@@ -104,13 +105,13 @@ function PanelPage({}: PanelPageProps) {
         {/* 快捷操作 */}
         <div className="mt-4 flex gap-2">
           <button
-            onClick={() => window.electronAPI?.navigateToSettings?.()}
+            onClick={() => window.location.hash = '/setting'}
             className="flex-1 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-white/70 text-xs transition-colors no-drag-region"
           >
             设置
           </button>
           <button
-            onClick={() => window.electronAPI?.hideWindow?.()}
+            onClick={() => hideWindow()}
             className="flex-1 py-2 bg-white/10 hover:bg-white/15 rounded-lg text-white/70 text-xs transition-colors no-drag-region"
           >
             隐藏
