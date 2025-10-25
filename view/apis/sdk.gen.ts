@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ChatData, ChatErrors, ChatResponses, ChatStreamData, ChatStreamErrors, ChatStreamResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
+import type { ChatData, ChatErrors, ChatResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -453,29 +453,6 @@ export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?
 export const chat = <ThrowOnError extends boolean = false>(options: Options<ChatData, ThrowOnError>) => {
     return (options.client ?? client).post<ChatResponses, ChatErrors, ThrowOnError>({
         url: '/autoAgent/chat',
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers
-        }
-    });
-};
-
-/**
- * Agent 流式对话
- *
- *
- * 与 Agent 进行流式对话
- *
- * **功能说明：**
- * - 发送消息给 Agent 并获取流式响应
- * - 支持实时接收 Agent 生成的内容
- * - 使用 Server-Sent Events (SSE) 返回数据流
- *
- */
-export const chatStream = <ThrowOnError extends boolean = false>(options: Options<ChatStreamData, ThrowOnError>) => {
-    return (options.client ?? client).post<ChatStreamResponses, ChatStreamErrors, ThrowOnError>({
-        url: '/autoAgent/chatStream',
         ...options,
         headers: {
             'Content-Type': 'application/json',

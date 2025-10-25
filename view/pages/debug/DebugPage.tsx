@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { chat, chatStream, listTasks, getTask, deleteTask, updateStepStatus, getAgentConfig, updateAgentConfig } from '../../apis'
+import { chat, listTasks, getTask, deleteTask, updateStepStatus, getAgentConfig, updateAgentConfig } from '../../apis'
 import type { ListTasksResponse, GetAgentConfigResponse, UpdateAgentConfigData } from '../../apis'
 
 // 从API响应中提取类型
@@ -22,14 +22,12 @@ interface ProcessResult {
   status: 'success' | 'error' | 'processing'
   duration?: number
   error?: string
-  isStream?: boolean
 }
 
 function DebugPage({}: DebugPageProps) {
   const [userInput, setUserInput] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState<ProcessResult[]>([])
-  const [isStreamMode, setIsStreamMode] = useState(false)
   
   // 配置相关状态
   const [agentConfig, setAgentConfig] = useState<any>(null)
@@ -222,8 +220,7 @@ function DebugPage({}: DebugPageProps) {
       timestamp: new Date().toLocaleTimeString(),
       userInput: userInput,
       response: '',
-      status: 'processing',
-      isStream: isStreamMode
+      status: 'processing'
     }
     
     setResults(prev => [newResult, ...prev])
@@ -237,53 +234,26 @@ function DebugPage({}: DebugPageProps) {
         }
       ]
 
-      if (isStreamMode) {
-        // 流式处理
-        const response = await chatStream({
-          body: { messages }
-        })
-        
-        const duration = Date.now() - startTime
-        let fullResponse = ''
-        
-        // TODO: 处理 SSE 流式数据
-        // 这里需要根据实际的 SSE 响应格式来处理
-        if (response.data && typeof response.data === 'object') {
-          fullResponse = JSON.stringify(response.data)
-        } else {
-          fullResponse = '流式响应处理中...'
-        }
-        
+      // 非流式处理
+      const response = await chat({
+        body: { messages }
+      })
+      
+      const duration = Date.now() - startTime
+      
+      // 检查响应状态
+      if (response.data && response.data.status === 'SUCCESS') {
+        // 更新结果
         setResults(prev => prev.map((result, index) => 
           index === 0 ? { 
             ...result, 
-            response: fullResponse, 
+            response: response.data!.data.content, 
             status: 'success',
             duration: duration
           } : result
         ))
       } else {
-        // 非流式处理
-        const response = await chat({
-          body: { messages }
-        })
-        
-        const duration = Date.now() - startTime
-        
-        // 检查响应状态
-        if (response.data && response.data.status === 'SUCCESS') {
-          // 更新结果
-          setResults(prev => prev.map((result, index) => 
-            index === 0 ? { 
-              ...result, 
-              response: response.data!.data.content, 
-              status: 'success',
-              duration: duration
-            } : result
-          ))
-        } else {
-          throw new Error(response.data?.message || '未知错误')
-        }
+        throw new Error(response.data?.message || '未知错误')
       }
       
       // 清空用户输入
@@ -414,33 +384,12 @@ function DebugPage({}: DebugPageProps) {
 
             {/* 测试用户输入 */}
             <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
-                  测试用户输入
-                </h2>
-                {/* 流式模式切换 */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">流式模式</span>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={isStreamMode}
-                      onChange={(e) => setIsStreamMode(e.target.checked)}
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                  </label>
-                  <span className={cn(
-                    "text-xs px-2 py-1 rounded-full",
-                    isStreamMode ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600"
-                  )}>
-                    {isStreamMode ? '开启' : '关闭'}
-                  </span>
-                </div>
-              </div>
+              <h2 className="text-lg font-semibold text-gray-700 flex items-center gap-2 mb-4">
+                <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                </svg>
+                测试用户输入
+              </h2>
               <textarea
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
@@ -468,8 +417,6 @@ function DebugPage({}: DebugPageProps) {
                     ? "bg-yellow-50 text-yellow-600 border border-yellow-200 cursor-not-allowed"
                     : !userInput.trim()
                     ? "bg-gray-50 text-gray-400 border border-gray-200 cursor-not-allowed"
-                    : isStreamMode
-                    ? "bg-purple-500 hover:bg-purple-600 text-white shadow-lg hover:shadow-purple-500/25 transform hover:scale-[1.02] active:scale-[0.98]"
                     : "bg-blue-500 hover:bg-blue-600 text-white shadow-lg hover:shadow-blue-500/25 transform hover:scale-[1.02] active:scale-[0.98]"
                 )}
               >
@@ -482,28 +429,17 @@ function DebugPage({}: DebugPageProps) {
                   </>
                 ) : (
                   <>
-                    {isStreamMode ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16l13-8L7 4z" />
-                      </svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    )}
-                    {isStreamMode ? '开始流式处理' : '开始处理'}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    开始处理
                   </>
                 )}
               </button>
               {/* 模式提示 */}
               <div className="mt-3 text-center">
-                <span className={cn(
-                  "text-xs px-3 py-1 rounded-full",
-                  isStreamMode 
-                    ? "bg-purple-100 text-purple-700"
-                    : "bg-blue-100 text-blue-700"
-                )}>
-                  {isStreamMode ? '🔄 流式模式：实时响应' : '⚡ 标准模式：完整响应'}
+                <span className="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700">
+                  ⚡ 标准模式：完整响应
                 </span>
               </div>
             </div>
@@ -706,11 +642,6 @@ function DebugPage({}: DebugPageProps) {
                             • {result.duration}ms
                           </span>
                         )}
-                        {result.isStream && (
-                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                            流式
-                          </span>
-                        )}
                       </div>
                       <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-medium",
@@ -733,13 +664,8 @@ function DebugPage({}: DebugPageProps) {
                       
                       {result.response && (
                         <div>
-                          <div className="text-gray-700 font-medium mb-1 flex items-center gap-2">
+                          <div className="text-gray-700 font-medium mb-1">
                             AI 响应:
-                            {result.isStream && (
-                              <span className="text-xs text-purple-600">
-                                (流式响应)
-                              </span>
-                            )}
                           </div>
                           <div className={cn(
                             "p-3 rounded border whitespace-pre-wrap",

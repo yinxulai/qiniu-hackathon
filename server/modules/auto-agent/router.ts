@@ -6,7 +6,6 @@ import { createAutoAgentService } from './service'
 import {
   GetAgentConfigSchema,
   UpdateAgentConfigSchema,
-  ChatStreamSchema,
   ChatSchema,
 } from './schema'
 import { AIMessage, isAIMessage } from '@langchain/core/messages'
@@ -35,27 +34,6 @@ export function createAutoAgentRouter(options: { taskManageService: TaskManageSe
       const lastAiMessage = aiMessages[aiMessages.length - 1]
       const content = lastAiMessage ? String(lastAiMessage.content) : ''
       return createSuccessResponse({ content })
-    })
-
-    typedApp.post('/autoAgent/chatStream', { schema: ChatStreamSchema, }, async (request, reply) => {
-      const { messages } = request.body
-
-      reply.raw.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
-        'Connection': 'keep-alive',
-      })
-
-      try {
-        for await (const chunk of service.chatStream(messages)) {
-          reply.raw.write(`data: ${JSON.stringify({ content: chunk })}\n\n`)
-        }
-        reply.raw.write('data: [DONE]\n\n')
-      } catch (error) {
-        reply.raw.write(`data: ${JSON.stringify({ error: (error as Error).message })}\n\n`)
-      } finally {
-        reply.raw.end()
-      }
     })
   }
 }

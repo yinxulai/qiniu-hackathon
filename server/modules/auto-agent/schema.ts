@@ -63,26 +63,6 @@ export const UpdateAgentConfigSchema = routerSchema({
 
 export type UpdateAgentConfigInput = z.infer<typeof UpdateAgentConfigSchema.body>
 
-const chatStreamDescription = `
-与 Agent 进行流式对话
-
-**功能说明：**
-- 发送消息给 Agent 并获取流式响应
-- 支持实时接收 Agent 生成的内容
-- 使用 Server-Sent Events (SSE) 返回数据流
-`
-
-export const ChatStreamSchema = routerSchema({
-  operationId: 'chatStream',
-  summary: 'Agent 流式对话',
-  tags: ['Auto Agent 管理'],
-  description: chatStreamDescription,
-  body: z.object({
-    messages: z.array(MessageSchema).min(1).describe('对话消息列表'),
-  }),
-  response: responseSchema(z.any()), // SSE 响应不需要定义具体 schema
-})
-
 const chatDescription = `
 与 Agent 进行对话
 

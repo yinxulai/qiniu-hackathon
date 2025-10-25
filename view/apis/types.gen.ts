@@ -109,6 +109,12 @@ export type ListMcpServerResponses = {
                      * 命令行参数列表
                      */
                     args: Array<string>;
+                    /**
+                     * 环境变量，键值对形式
+                     */
+                    env?: {
+                        [key: string]: string;
+                    };
                 } | {
                     /**
                      * SSE 服务器 URL 地址
@@ -221,6 +227,12 @@ export type ListEnabledMcpServerResponses = {
                      * 命令行参数列表
                      */
                     args: Array<string>;
+                    /**
+                     * 环境变量，键值对形式
+                     */
+                    env?: {
+                        [key: string]: string;
+                    };
                 } | {
                     /**
                      * SSE 服务器 URL 地址
@@ -268,6 +280,12 @@ export type CreateMcpServerData = {
              * 命令行参数列表
              */
             args: Array<string>;
+            /**
+             * 环境变量，键值对形式
+             */
+            env?: {
+                [key: string]: string;
+            };
         } | {
             /**
              * SSE 服务器 URL 地址
@@ -356,6 +374,12 @@ export type CreateMcpServerResponses = {
                  * 命令行参数列表
                  */
                 args: Array<string>;
+                /**
+                 * 环境变量，键值对形式
+                 */
+                env?: {
+                    [key: string]: string;
+                };
             } | {
                 /**
                  * SSE 服务器 URL 地址
@@ -406,6 +430,12 @@ export type UpdateMcpServerData = {
              * 命令行参数列表
              */
             args: Array<string>;
+            /**
+             * 环境变量，键值对形式
+             */
+            env?: {
+                [key: string]: string;
+            };
         } | {
             /**
              * SSE 服务器 URL 地址
@@ -494,6 +524,12 @@ export type UpdateMcpServerResponses = {
                  * 命令行参数列表
                  */
                 args: Array<string>;
+                /**
+                 * 环境变量，键值对形式
+                 */
+                env?: {
+                    [key: string]: string;
+                };
             } | {
                 /**
                  * SSE 服务器 URL 地址
@@ -2039,85 +2075,3 @@ export type ChatResponses = {
 };
 
 export type ChatResponse = ChatResponses[keyof ChatResponses];
-
-export type ChatStreamData = {
-    body: {
-        /**
-         * 对话消息列表
-         */
-        messages: Array<{
-            /**
-             * 消息角色
-             */
-            role: 'user' | 'assistant' | 'system';
-            /**
-             * 消息内容
-             */
-            content: string;
-        }>;
-    };
-    path?: never;
-    query?: never;
-    url: '/autoAgent/chatStream';
-};
-
-export type ChatStreamErrors = {
-    /**
-     * Default Response
-     */
-    400: {
-        /**
-         * 响应数据
-         */
-        data: null;
-        /**
-         * 响应状态码
-         */
-        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
-        /**
-         * 响应消息
-         */
-        message: string;
-    };
-    /**
-     * Default Response
-     */
-    500: {
-        /**
-         * 响应数据
-         */
-        data: null;
-        /**
-         * 响应状态码
-         */
-        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
-        /**
-         * 响应消息
-         */
-        message: string;
-    };
-};
-
-export type ChatStreamError = ChatStreamErrors[keyof ChatStreamErrors];
-
-export type ChatStreamResponses = {
-    /**
-     * Default Response
-     */
-    200: {
-        /**
-         * 响应数据
-         */
-        data: unknown;
-        /**
-         * 响应状态码
-         */
-        status: 'SUCCESS';
-        /**
-         * 响应消息
-         */
-        message: string;
-    };
-};
-
-export type ChatStreamResponse = ChatStreamResponses[keyof ChatStreamResponses];
