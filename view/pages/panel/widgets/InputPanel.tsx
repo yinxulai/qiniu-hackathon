@@ -160,6 +160,13 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
     }
   }
 
+  const handleInputBlur = () => {
+    // 使用 setTimeout 延迟隐藏，以便用户点击建议项时能够触发 onClick 事件
+    setTimeout(() => {
+      setShowSuggestions(false)
+    }, 150)
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setTextInput(e.target.value)
     setHistoryIndex(-1)
@@ -302,6 +309,7 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
                   onChange={handleInputChange}
                   onKeyDown={handleTextSubmit}
                   onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
                   placeholder="告诉我您想要做什么..."
                   disabled={isProcessing}
                   rows={3}
@@ -392,7 +400,10 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
                   {suggestions.map((suggestion, index) => (
                     <button
                       key={index}
-                      onClick={() => handleSuggestionClick(suggestion)}
+                      onMouseDown={(e) => {
+                        e.preventDefault() // 防止输入框失去焦点
+                        handleSuggestionClick(suggestion)
+                      }}
                       className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-mint-50 hover:text-mint-700 rounded-lg transition-colors duration-150"
                     >
                       {suggestion}
