@@ -808,14 +808,6 @@ export type GetAgentConfigResponses = {
              * 系统提示词，用于定义 Agent 的行为和角色
              */
             systemPrompt?: string;
-            /**
-             * 创建时间
-             */
-            createdTime: string;
-            /**
-             * 更新时间
-             */
-            updatedTime: string;
         } | null;
         /**
          * 响应状态码
@@ -922,14 +914,6 @@ export type UpdateAgentConfigResponses = {
              * 系统提示词，用于定义 Agent 的行为和角色
              */
             systemPrompt?: string;
-            /**
-             * 创建时间
-             */
-            createdTime: string;
-            /**
-             * 更新时间
-             */
-            updatedTime: string;
         };
         /**
          * 响应状态码

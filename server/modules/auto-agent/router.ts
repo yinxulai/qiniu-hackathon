@@ -7,7 +7,9 @@ import {
   GetAgentConfigSchema,
   UpdateAgentConfigSchema,
   ChatStreamSchema,
+  ChatSchema,
 } from './schema'
+import { AIMessage, isAIMessage } from '@langchain/core/messages'
 
 export function createAutoAgentRouter(options: {}): FastifyPluginAsync {
   return async (app) => {
@@ -22,6 +24,16 @@ export function createAutoAgentRouter(options: {}): FastifyPluginAsync {
     typedApp.post('/autoAgent/updateConfig', { schema: UpdateAgentConfigSchema, }, async (request) => {
       const config = service.updateConfig(request.body)
       return createSuccessResponse(config)
+    })
+
+    typedApp.post('/autoAgent/chat', { schema: ChatSchema, }, async (request) => {
+      const { messages } = request.body
+      const response = await service.chat(messages)
+      // 提取最后一个 AI 消息的内容
+      const aiMessages = response.filter(msg => AIMessage.isInstance(msg))
+      const lastAiMessage = aiMessages[aiMessages.length - 1]
+      const content = lastAiMessage ? String(lastAiMessage.content) : ''
+      return createSuccessResponse({ content })
     })
 
     typedApp.post('/autoAgent/chatStream', { schema: ChatStreamSchema, }, async (request, reply) => {

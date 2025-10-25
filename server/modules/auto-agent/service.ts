@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { createAgent } from 'langchain'
 import { ChatOpenAI } from '@langchain/openai'
 import { MultiServerMCPClient } from '@langchain/mcp-adapters'
-import { HumanMessage, AIMessage, SystemMessage } from '@langchain/core/messages'
+import { HumanMessage, AIMessage, SystemMessage, BaseMessage } from '@langchain/core/messages'
 import type { AgentConfig, Message, UpdateAgentConfigInput } from './schema'
 import { createMcpServerService } from '../mcp-server/service'
 
@@ -15,13 +15,18 @@ const store = new Store<{ config: AgentConfig | null }>({
 export function createAutoAgentService() {
   const mcpService = createMcpServerService()
 
-  function getConfig(): AgentConfig | null {
-    return store.get('config', null)
+  function getConfig(): AgentConfig {
+    return store.get('config') || {
+      id: 'default',
+      apiKey: 'sk-cd8ca153d613bcb43042cf6228581e3d840e8782fa653ec87dfdfe980880b0cb',
+      baseUrl: 'https://openai.qiniu.com/v1',
+      modelId: 'moonshotai/kimi-k2-0905',
+      systemPrompt: '',
+    }
   }
 
   function updateConfig(updates: UpdateAgentConfigInput): AgentConfig {
     const current = getConfig()
-    const now = new Date().toISOString()
 
     const updated: AgentConfig = {
       id: current?.id || uuidv4(),
@@ -29,15 +34,13 @@ export function createAutoAgentService() {
       baseUrl: updates.baseUrl ?? current?.baseUrl ?? '',
       modelId: updates.modelId ?? current?.modelId ?? '',
       systemPrompt: updates.systemPrompt ?? current?.systemPrompt,
-      createdTime: current?.createdTime || now,
-      updatedTime: now,
     }
 
     store.set('config', updated)
     return updated
   }
 
-  async function chat(messages: Message[]): Promise<Message> {
+  async function chat(messages: Message[]): Promise<BaseMessage[]> {
     const config = getConfig()
     if (!config || !config.apiKey || !config.baseUrl || !config.modelId) {
       throw new Error('Agent configuration is incomplete')
@@ -94,11 +97,7 @@ export function createAutoAgentService() {
       messages: langchainMessages,
     })
 
-    const lastMessage = response.messages[response.messages.length - 1]
-    return {
-      role: 'assistant',
-      content: lastMessage?.content?.toString() || '',
-    }
+    return response.messages
   }
 
   async function* chatStream(messages: Message[]): AsyncGenerator<string, void, unknown> {

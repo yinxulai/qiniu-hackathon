@@ -282,6 +282,11 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       settingWindow.show()
     })
 
+    // 只在开发模式下打开 DevTools
+    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+      settingWindow.webContents.openDevTools()
+    }
+
     return settingWindow
   }
 
