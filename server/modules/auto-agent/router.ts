@@ -7,6 +7,7 @@ import {
   GetAgentConfigSchema,
   UpdateAgentConfigSchema,
   ChatSchema,
+  ClearAgentCacheSchema,
 } from './schema'
 import { AIMessage, isAIMessage } from '@langchain/core/messages'
 import type { TaskManageService } from './task-manage/service'
@@ -34,6 +35,14 @@ export function createAutoAgentRouter(options: { taskManageService: TaskManageSe
       const lastAiMessage = aiMessages[aiMessages.length - 1]
       const content = lastAiMessage ? String(lastAiMessage.content) : ''
       return createSuccessResponse({ content })
+    })
+
+    typedApp.post('/autoAgent/clearCache', { schema: ClearAgentCacheSchema, }, async () => {
+      service.clearAgentCache()
+      return createSuccessResponse({
+        success: true,
+        message: 'Agent cache cleared successfully'
+      })
     })
   }
 }

@@ -56,6 +56,14 @@ export const useASR = (onFinalText?: (text: string) => void): UseASRReturn => {
       }
       
       setCurrentText('')
+      
+      // 处理完最终结果后，确保停止监听，等待下次主动唤醒
+      setTimeout(() => {
+        if (asrManagerRef.current && asrManagerRef.current.isRecording) {
+          console.log('[useASR] Auto-stopping after final result processing')
+          asrManagerRef.current.stopRecording()
+        }
+      }, 200)
     }
     
     const handleError = (event: Event) => {

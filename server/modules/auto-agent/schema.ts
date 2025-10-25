@@ -132,3 +132,24 @@ export const ChatSchema = routerSchema({
     content: z.string().describe('Agent 响应内容'),
   })),
 })
+
+// 清除 Agent 缓存
+const clearAgentCacheDescription = `
+清除 AI Agent 缓存
+
+**功能说明：**
+- 强制清除已缓存的 AI Agent 实例
+- 下次调用时将重新创建 Agent
+- 主要用于调试或配置更新后的强制刷新
+`
+
+export const ClearAgentCacheSchema = routerSchema({
+  operationId: 'clearAgentCache',
+  summary: '清除 Agent 缓存',
+  tags: ['Auto Agent 管理'],
+  description: clearAgentCacheDescription,
+  response: responseSchema(z.object({
+    success: z.boolean().describe('是否成功清除缓存'),
+    message: z.string().describe('操作结果消息'),
+  })),
+})

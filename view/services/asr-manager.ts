@@ -329,6 +329,14 @@ export class ASRManager extends EventTarget {
         detail: this._currentText.trim() 
       }))
       
+      // 自动停止录音，等待下次主动唤醒
+      if (this._isRecording) {
+        console.log('[ASRManager] Auto-stopping recording after final result')
+        this.stopRecording().catch((error) => {
+          console.error('[ASRManager] Failed to auto-stop recording:', error)
+        })
+      }
+      
       // 清理状态
       setTimeout(() => {
         this.updateText('')

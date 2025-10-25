@@ -69,6 +69,12 @@ function InputPanel({ onSubmit, isProcessing, aiResponse, isPolling = false }: I
       return
     }
     
+    console.log('[InputPanel] Voice input triggered, ASR status:', {
+      isRecording,
+      asrConnected,
+      asrError
+    })
+    
     try {
       // 如果要开始录音，先清空输入框
       if (!isRecording) {
