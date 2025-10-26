@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify'
 import { ZodTypeProvider } from 'fastify-type-provider-zod'
-import { createTaskService } from './service'
+import { TaskManageService } from './service'
 import {
   CreateTaskSchema,
   UpdateTaskSchema,
@@ -11,10 +11,10 @@ import {
 } from './schema'
 import { createSuccessResponse } from '@server/helpers/response'
 
-export function createTaskRouter(options: {}): FastifyPluginAsync {
+export function createTaskRouter(options: { taskService: TaskManageService }): FastifyPluginAsync {
   return async (app) => {
     const typedApp = app.withTypeProvider<ZodTypeProvider>()
-    const service = createTaskService()
+    const service = options.taskService
 
     // 创建任务
     typedApp.post('/autoAgent/task/create', { schema: CreateTaskSchema, }, async (request) => {

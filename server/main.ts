@@ -45,7 +45,7 @@ async function createServer() {
   fastify.register(createOpenapi())
   fastify.register(createResponseHandler())
   fastify.register(createMcpServerRouter({}))
-  fastify.register(createTaskRouter({ taskManageService }))
+  fastify.register(createTaskRouter({ taskService: taskManageService }))
   fastify.register(createWindowRouter({ windowService }))
   fastify.register(createAutoAgentRouter({ taskManageService }))
   fastify.register(createASRConfigRouter({}))

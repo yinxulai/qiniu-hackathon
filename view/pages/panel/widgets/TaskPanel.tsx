@@ -94,11 +94,11 @@ function TaskPanel({}: TaskPanelProps) {
     if (pollingInterval) {
       clearInterval(pollingInterval)
     }
-    
+
     const interval = setInterval(async () => {
       await loadTasks()
     }, 500) // 每0.5秒轮询一次
-    
+
     setPollingInterval(interval)
   }
 
@@ -113,10 +113,10 @@ function TaskPanel({}: TaskPanelProps) {
   // 获取最新任务并判断是否应该显示
   const shouldShowTask = (): Task | null => {
     if (tasks.length === 0) return null
-    
+
     const latestTask = tasks[0]
     if (!latestTask) return null
-    
+
     // 如果任务已经被隐藏，不再显示（除非是新任务）
     if (hiddenAt && latestTask.updatedAt) {
       const taskUpdateTime = new Date(latestTask.updatedAt).getTime()
@@ -124,28 +124,28 @@ function TaskPanel({}: TaskPanelProps) {
         return null
       }
     }
-    
+
     // 检查是否有未完成的子步骤
-    const hasIncompleteSteps = latestTask.subtasks.some(subtask => 
+    const hasIncompleteSteps = latestTask.subtasks.some(subtask =>
       subtask.status !== 'completed'
     )
-    
+
     // 有未完成的步骤，直接显示
     if (hasIncompleteSteps) {
       return latestTask
     }
-    
+
     // 全部完成，检查时间限制
     if (latestTask.updatedAt) {
       const timeDiff = (Date.now() - new Date(latestTask.updatedAt).getTime()) / 1000
-      
+
       if (timeDiff <= 10) {
         return latestTask
       } else if (!hiddenAt) {
         setHiddenAt(Date.now())
       }
     }
-    
+
     return null
   }
 
@@ -164,7 +164,7 @@ function TaskPanel({}: TaskPanelProps) {
     if (tasks.length > 0 && tasks[0]) {
       const latestTask = tasks[0]
       // 检查是否有进行中的步骤，如果有，重置hiddenAt
-      const hasActiveSteps = latestTask.subtasks.some(subtask => 
+      const hasActiveSteps = latestTask.subtasks.some(subtask =>
         subtask.status === 'pending' || subtask.status === 'in-progress'
       )
       if (hasActiveSteps && hiddenAt) {
@@ -189,41 +189,50 @@ function TaskPanel({}: TaskPanelProps) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      {/* 简洁的头部 */}
-      <div className="px-6 py-4 border-b border-gray-50">
-        <h3 className="text-base font-medium text-gray-900">当前任务</h3>
-      </div>
-
       {/* 任务内容 */}
       <div className="p-6 max-h-80 overflow-y-auto">
         {currentTask && (
           <div className="space-y-6">
-            {/* 主任务标题 - 薄荷流光主题 */}
-            <div className="flex items-start gap-4">
+            {/* 主任务标题 - 简洁样式 */}
+            <div className="flex items-start gap-3">
               <div className={`
-                w-6 h-6 rounded-full flex items-center justify-center text-sm font-semibold mt-0.5 shadow-sm
-                ${currentTask.status === 'completed' ? 'bg-emerald-500 text-white' : 
-                  currentTask.status === 'processing' ? 'bg-linear-to-br from-emerald-400 to-green-500 text-white' : 
-                  currentTask.status === 'failed' ? 'bg-red-500 text-white' :
-                  'bg-gray-200 text-gray-600'}
+                w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium mt-0.5
+                ${currentTask.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
+                  currentTask.status === 'processing' ? 'bg-emerald-50 text-emerald-600' :
+                    currentTask.status === 'failed' ? 'bg-red-100 text-red-700' :
+                      'bg-gray-100 text-gray-600'}
               `}>
                 {getStatusIcon(currentTask.status)}
               </div>
               <div className="flex-1 min-w-0">
-                <h4 className="text-base font-semibold text-gray-900 leading-tight">
+                <h4 className={`text-base font-semibold leading-tight ${currentTask.status === 'completed' ? 'text-emerald-800' :
+                    currentTask.status === 'processing' ? 'text-emerald-700' :
+                      currentTask.status === 'failed' ? 'text-red-800' :
+                        'text-gray-800'
+                  }`}>
                   {currentTask.title}
                 </h4>
-                
-                {/* 进度条 - 薄荷流光渐变 */}
+                <div className={`text-sm mt-1 ${currentTask.status === 'completed' ? 'text-emerald-600' :
+                    currentTask.status === 'processing' ? 'text-emerald-600' :
+                      currentTask.status === 'failed' ? 'text-red-600' :
+                        'text-gray-500'
+                  }`}>
+                  {currentTask.status === 'completed' ? '已完成' :
+                    currentTask.status === 'processing' ? '执行中' :
+                      currentTask.status === 'failed' ? '执行失败' :
+                        '等待中'}
+                </div>
+
+                {/* 进度条 - 简洁样式 */}
                 {currentTask.status === 'processing' && (
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">进度</span>
-                      <span className="text-sm font-semibold text-emerald-600">{currentTask.progress}%</span>
+                      <span className="text-xs text-gray-500">进度</span>
+                      <span className="text-xs text-emerald-600 font-medium">{currentTask.progress}%</span>
                     </div>
-                    <div className="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="bg-linear-to-r from-emerald-400 via-green-400 to-emerald-500 h-2 rounded-full transition-all duration-1000 ease-out shadow-sm"
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div
+                        className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500"
                         style={{ width: `${currentTask.progress}%` }}
                       />
                     </div>
@@ -232,38 +241,40 @@ function TaskPanel({}: TaskPanelProps) {
               </div>
             </div>
 
-            {/* 子任务列表 - 薄荷流光主题 */}
+            {/* 子任务列表 - 简洁样式 */}
             {currentTask.subtasks.length > 0 && (
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 bg-linear-to-b from-emerald-400 to-green-500 rounded-full"></div>
-                  <h5 className="text-sm font-semibold text-gray-700">执行步骤</h5>
+                  <div className="w-0.5 h-3 bg-emerald-400 rounded-full"></div>
+                  <h5 className="text-sm font-medium text-gray-600">执行步骤</h5>
                 </div>
-                <div className="space-y-2 pl-5">
+                <div className="space-y-2 pl-4">
                   {currentTask.subtasks.map((subtask, index) => (
                     <div key={subtask.id} className="flex items-center gap-3 py-2">
-                      <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 transition-all duration-200">
+                      <div className="flex items-center justify-center w-5 h-5 rounded-full">
                         {subtask.status === 'completed' ? (
-                          <div className="w-full h-full bg-linear-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">✓</span>
+                          <div className="w-full h-full bg-emerald-500 rounded-full flex items-center justify-center">
+                            <span className="text-white text-xs">✓</span>
                           </div>
                         ) : subtask.status === 'in-progress' ? (
-                          <div className="w-full h-full border-emerald-400 bg-emerald-50 rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                          <div className="w-full h-full bg-emerald-500 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
                           </div>
                         ) : (
-                          <div className="w-full h-full border-gray-200 bg-gray-50 rounded-full flex items-center justify-center">
-                            <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
-                          </div>
+                          <div className="w-full h-full border border-gray-300 bg-white rounded-full"></div>
                         )}
                       </div>
-                      <span className={`text-sm font-medium flex-1 ${
-                        subtask.status === 'completed' ? 'text-emerald-700' :
-                        subtask.status === 'in-progress' ? 'text-emerald-600' :
-                        'text-gray-500'
-                      }`}>
+                      <span className={`text-sm flex-1 ${subtask.status === 'completed' ? 'text-emerald-700 line-through' :
+                          subtask.status === 'in-progress' ? 'text-emerald-700 font-medium' :
+                            'text-gray-600'
+                        }`}>
                         {subtask.title}
                       </span>
+                      {subtask.status === 'completed' && (
+                        <span className="text-xs text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                          完成
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -272,17 +283,17 @@ function TaskPanel({}: TaskPanelProps) {
           </div>
         )}
 
-        {/* 完成状态 - 薄荷流光主题 */}
-        {currentTask && currentTask.status === 'completed' && 
-         currentTask.subtasks.every(subtask => subtask.status === 'completed') && (
-          <div className="text-center py-6 border-t border-gray-100 mt-6">
-            <div className="w-12 h-12 mx-auto mb-3 bg-linear-to-br from-emerald-400 to-green-500 rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-xl">✨</span>
+        {/* 完成状态 - 简洁样式 */}
+        {currentTask && currentTask.status === 'completed' &&
+          currentTask.subtasks.every((subtask) => subtask.status === 'completed') && (
+            <div className="text-center py-4 border-t border-gray-100 mt-4">
+              <div className="w-8 h-8 mx-auto mb-2 bg-emerald-500 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">✓</span>
+              </div>
+              <div className="text-emerald-700 font-medium text-sm mb-1">任务完成</div>
+              <div className="text-xs text-gray-500">即将自动关闭</div>
             </div>
-            <div className="text-emerald-700 font-semibold text-base mb-1">任务完成</div>
-            <div className="text-sm text-gray-500">即将自动关闭</div>
-          </div>
-        )}
+          )}
       </div>
     </div>
   )
