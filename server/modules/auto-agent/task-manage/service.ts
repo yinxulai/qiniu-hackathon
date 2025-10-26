@@ -1,14 +1,10 @@
-import Store from 'electron-store'
 import { v4 as uuidv4 } from 'uuid'
 import { tool } from "langchain"
 import type { Task, Step, CreateTaskInput, UpdateTaskInput, StepStatus } from './schema'
 
-const store = new Store<{ tasks: Task[] }>({
-  name: 'task-manage',
-  defaults: { tasks: [] },
-})
-
 export function createTaskService() {
+  // 内存存储
+  let tasks: Task[] = []
   
   function createTask(input: CreateTaskInput): Task {
     const now = new Date()
@@ -31,17 +27,14 @@ export function createTaskService() {
       updatedAt: now.toISOString(),
     }
 
-    const tasks = store.get('tasks', [])
     tasks.push(task)
-    store.set('tasks', tasks)
 
     return task
   }
 
   function listTasks(page: number = 1, pageSize: number = 10): { list: Task[], total: number } {
-    const tasks = store.get('tasks', [])
     // 按创建时间倒序排列，最新的在前面
-    const sortedTasks = tasks.sort((a, b) => {
+    const sortedTasks = tasks.sort((a: Task, b: Task) => {
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
       return timeB - timeA
@@ -56,13 +49,11 @@ export function createTaskService() {
   }
 
   function getTask(id: string): Task | null {
-    const tasks = store.get('tasks', [])
-    return tasks.find(task => task.id === id) || null
+    return tasks.find((task: Task) => task.id === id) || null
   }
 
   function updateTask(id: string, updates: UpdateTaskInput): Task {
-    const tasks = store.get('tasks', [])
-    const taskIndex = tasks.findIndex(task => task.id === id)
+    const taskIndex = tasks.findIndex((task: Task) => task.id === id)
     
     if (taskIndex === -1) {
       throw new Error('任务不存在')
@@ -83,7 +74,7 @@ export function createTaskService() {
     if (updates.steps) {
       const newSteps = updates.steps.map((stepInput) => {
         // 通过标题匹配现有步骤，保留ID和创建时间
-        const existingStep = currentTask.steps.find(s => s.title === stepInput.title)
+        const existingStep = currentTask.steps.find((s: Step) => s.title === stepInput.title)
         
         if (existingStep) {
           // 现有步骤，保留ID和创建时间，但更新时间戳
@@ -118,32 +109,28 @@ export function createTaskService() {
     }
     
     tasks[taskIndex] = currentTask
-    store.set('tasks', tasks)
 
     return currentTask
   }
 
   function deleteTask(id: string): void {
-    const tasks = store.get('tasks', [])
-    const filteredTasks = tasks.filter(task => task.id !== id)
+    const originalLength = tasks.length
+    tasks = tasks.filter((task: Task) => task.id !== id)
     
-    if (filteredTasks.length === tasks.length) {
+    if (tasks.length === originalLength) {
       throw new Error('任务不存在')
     }
-    
-    store.set('tasks', filteredTasks)
   }
 
   function updateStepStatus(taskId: string, stepId: string, status: StepStatus): Task {
-    const tasks = store.get('tasks', [])
-    const taskIndex = tasks.findIndex(task => task.id === taskId)
+    const taskIndex = tasks.findIndex((task: Task) => task.id === taskId)
     
     if (taskIndex === -1) {
       throw new Error('任务不存在')
     }
 
     const task = tasks[taskIndex]!
-    const stepIndex = task.steps.findIndex(step => step.id === stepId)
+    const stepIndex = task.steps.findIndex((step: Step) => step.id === stepId)
     
     if (stepIndex === -1) {
       throw new Error('步骤不存在')
@@ -162,15 +149,13 @@ export function createTaskService() {
     }
 
     tasks[taskIndex] = task
-    store.set('tasks', tasks)
 
     return task
   }
 
   function getTasksByStatus(stepStatus?: StepStatus): Task[] {
-    const tasks = store.get('tasks', [])
     // 按创建时间倒序排列，最新的在前面
-    const sortedTasks = tasks.sort((a, b) => {
+    const sortedTasks = [...tasks].sort((a: Task, b: Task) => {
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0
       return timeB - timeA
@@ -180,8 +165,8 @@ export function createTaskService() {
       return sortedTasks
     }
 
-    return sortedTasks.filter(task => 
-      task.steps.some(step => step.status === stepStatus)
+    return sortedTasks.filter((task: Task) => 
+      task.steps.some((step: Step) => step.status === stepStatus)
     )
   }
 
