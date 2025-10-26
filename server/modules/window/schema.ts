@@ -21,13 +21,13 @@ const showWindowDescription = `
 显示主面板窗口
 
 **功能说明：**
-- 显示并聚焦Siwe主面板窗口
+- 显示并聚焦Siwei主面板窗口
 - 窗口固定在屏幕右侧，宽度 320px
 - 如果窗口未创建，则自动创建新窗口
 - 支持快捷键 Ctrl+Shift+V 快速唤醒
 
 **使用场景：**
-- 用户需要打开Siwe界面进行交互
+- 用户需要打开Siwei界面进行交互
 - 通过 API 或快捷键激活助手功能
 `
 
@@ -43,7 +43,7 @@ const hideWindowDescription = `
 隐藏主面板窗口
 
 **功能说明：**
-- 隐藏Siwe主面板窗口但不关闭进程
+- 隐藏Siwei主面板窗口但不关闭进程
 - 窗口状态和数据保持在内存中
 - 可通过快捷键 Ctrl+Shift+V 或 API 重新显示
 - 隐藏后助手仍在后台运行，可处理语音唤醒
@@ -106,7 +106,7 @@ export const ReloadWindowSchema = routerSchema({
 })
 
 const quitAppDescription = `
-完全退出Siwe应用
+完全退出Siwei应用
 
 **功能说明：**
 - 关闭所有窗口（主面板、调试、设置窗口）
@@ -115,7 +115,7 @@ const quitAppDescription = `
 - 注销全局快捷键绑定
 
 **使用场景：**
-- 完全关闭Siwe应用
+- 完全关闭Siwei应用
 - 系统关机前的安全退出
 - 重启应用前的清理操作
 `

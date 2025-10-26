@@ -40,7 +40,7 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       alwaysOnTop: !MAIN_WINDOW_VITE_DEV_SERVER_URL,
       resizable: false,
       route: '/panel',
-      title: 'Siwe - Panel',
+      title: 'Siwei - Panel',
     },
     debug: {
       width: 1200,
@@ -50,7 +50,7 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       alwaysOnTop: false,
       resizable: true,
       route: '/debug',
-      title: 'Siwe - Debug',
+      title: 'Siwei - Debug',
       minWidth: 800,
       minHeight: 600,
     },
@@ -62,7 +62,7 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       alwaysOnTop: false,
       resizable: true,
       route: '/setting',
-      title: 'Siwe - Settings',
+      title: 'Siwei - Settings',
       minWidth: 600,
       minHeight: 400,
     },
@@ -216,7 +216,7 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       }
     ])
 
-    tray.setToolTip('Siwe - 智能语音助手')
+    tray.setToolTip('Siwei - 智能语音助手')
     tray.setContextMenu(contextMenu)
 
     // 点击托盘图标显示/隐藏窗口
