@@ -77,28 +77,53 @@ export function createTaskService() {
 
     const now = new Date()
     const currentTask = tasks[taskIndex]!
+    let hasChanges = false
     
     // 更新任务基本信息
-    if (updates.title) {
+    if (updates.title && updates.title !== currentTask.title) {
       currentTask.title = updates.title
+      hasChanges = true
+      console.log(`[TASK] Task title updated: ${id}`)
     }
     
     // 更新步骤列表
     if (updates.steps) {
-      currentTask.steps = updates.steps.map((stepInput) => {
-        // 如果步骤有 ID，尝试保留现有步骤的创建时间
+      const newSteps = updates.steps.map((stepInput) => {
+        // 通过标题匹配现有步骤，保留ID和创建时间
         const existingStep = currentTask.steps.find(s => s.title === stepInput.title)
-        return {
-          id: existingStep?.id || uuidv4(),
-          title: stepInput.title,
-          status: existingStep?.status || 'processing' as StepStatus,
-          createdAt: existingStep?.createdAt || now.toISOString(),
-          updatedAt: now.toISOString(),
+        
+        if (existingStep) {
+          // 现有步骤，保留ID和创建时间，但更新时间戳
+          return {
+            ...existingStep,
+            title: stepInput.title,
+            updatedAt: now.toISOString(),
+          }
+        } else {
+          // 新步骤
+          return {
+            id: uuidv4(),
+            title: stepInput.title,
+            status: 'processing' as StepStatus,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          }
         }
       })
+      
+      // 检查步骤是否有变化
+      if (JSON.stringify(currentTask.steps) !== JSON.stringify(newSteps)) {
+        currentTask.steps = newSteps
+        hasChanges = true
+        console.log(`[TASK] Task steps updated: ${id}`)
+      }
     }
 
-    currentTask.updatedAt = now.toISOString()
+    // 只有真正有变化时才更新任务时间戳
+    if (hasChanges) {
+      currentTask.updatedAt = now.toISOString()
+    }
+    
     tasks[taskIndex] = currentTask
     store.set('tasks', tasks)
 
@@ -132,9 +157,16 @@ export function createTaskService() {
     }
 
     const now = new Date()
-    task.steps[stepIndex]!.status = status
-    task.steps[stepIndex]!.updatedAt = now.toISOString()
-    task.updatedAt = now.toISOString()
+    const currentStep = task.steps[stepIndex]!
+    
+    // 只有状态真正变化时才更新
+    if (currentStep.status !== status) {
+      currentStep.status = status
+      currentStep.updatedAt = now.toISOString()
+      task.updatedAt = now.toISOString() // 任务也要更新时间戳
+      
+      console.log(`[TASK] Step status updated: ${stepId} -> ${status}`)
+    }
 
     tasks[taskIndex] = task
     store.set('tasks', tasks)
