@@ -5,15 +5,9 @@ import { MakerDeb } from '@electron-forge/maker-deb';
 import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
-import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
 
 const config: ForgeConfig = {
-  packagerConfig: {
-    asar: {
-      unpack: '**/node_modules/@picovoice/**/*'
-    }
-  },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}),
@@ -22,8 +16,6 @@ const config: ForgeConfig = {
     new MakerDeb({}),
   ],
   plugins: [
-    // 自动解包原生模块插件
-    new AutoUnpackNativesPlugin({}),
     new VitePlugin({
       // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
       // If you are familiar with Vite configuration, it will look really familiar.
