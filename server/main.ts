@@ -57,6 +57,35 @@ async function createServer() {
 }
 
 /**
+ * 获取平台特定的唤醒词文件路径
+ */
+function getPlatformKeywordPath(): string {
+  const platform = process.platform
+  const arch = process.arch
+
+  console.log(`[VoiceWakeup] Detecting platform: ${platform}, architecture: ${arch}`)
+  
+  // 根据平台和架构选择文件
+  let filename: string
+  
+  if (platform === 'win32') {
+    // Windows
+    filename = 'windows_arm64.ppn'
+  } else if (platform === 'darwin') {
+    // macOS
+    filename = 'mac_arm64.ppn'
+  } else {
+    // Linux 和其他平台
+    filename = 'web.ppn' // 使用通用的web文件作为后备
+  }
+  
+  const keywordPath = path.join(process.cwd(), 'static/porcupine', filename)
+  console.log(`[VoiceWakeup] Platform: ${platform}, Arch: ${arch}, Using keyword file: ${filename}`)
+  
+  return keywordPath
+}
+
+/**
  * 初始化语音唤醒服务
  */
 async function initializeVoiceWakeup(): Promise<void> {
@@ -70,17 +99,25 @@ async function initializeVoiceWakeup(): Promise<void> {
       return
     }
 
-    // 构建离线唤醒词文件路径和中文模型文件路径
-    const keywordPath = path.join(process.cwd(), 'static/porcupine/windows_arm64.ppn')
+    // 获取平台特定的唤醒词文件路径
+    const keywordPath = getPlatformKeywordPath()
     const modelPath = path.join(process.cwd(), 'static/porcupine/porcupine_params_zh.pv')
     
-    console.log(`[VoiceWakeup] Using offline keyword file: ${keywordPath}`)
+    console.log(`[VoiceWakeup] Using keyword file: ${keywordPath}`)
     console.log(`[VoiceWakeup] Using Chinese model file: ${modelPath}`)
 
     // 检查文件是否存在
     const fs = require('fs')
     if (!fs.existsSync(keywordPath)) {
       console.error(`[VoiceWakeup] Keyword file not found: ${keywordPath}`)
+      console.log('[VoiceWakeup] Available files in porcupine directory:')
+      try {
+        const porcupineDir = path.join(process.cwd(), 'static/porcupine')
+        const files = fs.readdirSync(porcupineDir)
+        files.forEach((file: string) => console.log(`  - ${file}`))
+      } catch (e) {
+        console.log('  Could not read porcupine directory')
+      }
       return
     }
     if (!fs.existsSync(modelPath)) {
@@ -127,17 +164,9 @@ async function initializeVoiceWakeup(): Promise<void> {
  */
 function notifyPanelVoiceMode(): void {
   try {
-    // 显示面板窗口
-    windowService.showMainWindow()
+    const success = windowService.activateVoiceInput()
     
-    // 获取主窗口并发送消息
-    const mainWindow = windowService.getMainWindow()
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      // 发送消息到渲染进程，触发语音输入模式
-      mainWindow.webContents.send('voice-wakeup-detected', {
-        timestamp: Date.now(),
-        action: 'start-voice-input'
-      })
+    if (success) {
       console.log('[VoiceWakeup] Notified panel to enter voice input mode')
     } else {
       console.warn('[VoiceWakeup] Main window not available')

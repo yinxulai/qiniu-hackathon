@@ -1,7 +1,6 @@
 import Store from 'electron-store'
 import { v4 as uuidv4 } from 'uuid'
 import { McpServer, McpServerSchema, UpdateMcpServerInput } from './schema'
-import { UserError } from '@taicode/common-base'
 import { config } from '@server/config'
 
 const store = new Store<{ servers: McpServer[] }>({
@@ -18,6 +17,22 @@ const store = new Store<{ servers: McpServer[] }>({
           "args": [
             "@playwright/mcp@latest"
           ]
+        }
+      },
+      {
+        "id": "@amap/amap-maps-mcp",
+        "name": "@amap/amap-maps-mcp",
+        "transport": "stdio",
+        "enabled": true,
+        "config": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "@amap/amap-maps-mcp-server"
+          ],
+          "env": {
+            "AMAP_MAPS_API_KEY": ''
+          }
         }
       },
       {
@@ -53,48 +68,6 @@ const store = new Store<{ servers: McpServer[] }>({
 
 export function createMcpServerService() {
   function listMcp(): McpServer[] {
-    // return [
-    //   {
-    //     "id": "playwright/mcp",
-    //     "name": "playwright",
-    //     "transport": "stdio",
-    //     "enabled": true,
-    //     "config": {
-    //       "command": "npx",
-    //       "args": [
-    //         "@playwright/mcp@latest"
-    //       ]
-    //     }
-    //   },
-    //   {
-    //     "id": "desktop-commander",
-    //     "name": "desktop-commander",
-    //     "transport": "stdio",
-    //     "enabled": true,
-    //     "config": {
-    //       "command": "npx",
-    //       "args": [
-    //         "-y",
-    //         "@wonderwhy-er/desktop-commander@latest"
-    //       ]
-    //     }
-    //   },
-    //   {
-    //     "id": "self-server-mcp",
-    //     "name": "self-server-mcp",
-    //     "transport": "stdio",
-    //     "enabled": true,
-    //     "config": {
-    //       "command": "npx",
-    //       "args": ["-y", "@ivotoby/openapi-mcp-server"],
-    //       "env": {
-    //         "API_BASE_URL": `http://localhost:${config.port}`,
-    //         "OPENAPI_SPEC_PATH": `http://localhost:${config.port}/openapi.json`
-    //       }
-    //     }
-    //   }
-    // ]
-
     const data = store.get('servers', [])
     return data.map(server => McpServerSchema.parse(server)) // 验证数据
   }
@@ -114,7 +87,7 @@ export function createMcpServerService() {
     const servers = listMcp()
     const index = servers.findIndex(s => s.id === id)
     if (index === -1) {
-      throw new UserError('MCP_SERVER_NOT_FOUND', 'MCP server not found')
+      throw new Error('MCP server not found')
     }
 
     const current = servers[index]!

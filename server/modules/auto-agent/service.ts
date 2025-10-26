@@ -19,7 +19,6 @@ export function createAutoAgentService(taskService: TaskManageService) {
   // Agent 缓存
   let cachedAgent: any = null
   let cachedConfigHash: string = ''
-  let cachedMcpToolsHash: string = ''
 
   function getConfig(): AgentConfig {
     return store.get('config') || {
@@ -187,7 +186,6 @@ export function createAutoAgentService(taskService: TaskManageService) {
   function clearAgentCache(): void {
     cachedAgent = null
     cachedConfigHash = ''
-    cachedMcpToolsHash = ''
     console.log('[AUTO-AGENT] Agent cache cleared manually')
   }
 
