@@ -2,8 +2,6 @@
 
 Siwei 是一款通过自然语言来控制并自动化您电脑操作、提高生产力的智能工具。
 
-> 💡 **提示**: 点击上方按钮查看产品演示视频
-
 <div align="center">
   <h3>通过文字和语音控制电脑的智能工具</h3>
   <p>支持多种能力交叉执行复杂任务的AI助手</p>
@@ -14,16 +12,14 @@ Siwei 是一款通过自然语言来控制并自动化您电脑操作、提高�
   ![React](https://img.shields.io/badge/React-19.2.0-blue.svg)
 </div>
 
-<video width="100%" controls>
-  <source src="./static/siwei.mp4" type="video/mp4">
-  您的浏览器不支持视频播放。
-</video>
+https://github.com/user-attachments/assets/1871b94a-0561-4c4e-b124-463ba8b77cae
 
 ## ✨ 核心亮点
 
 ### 🎯 功能亮点
 
 #### 🤖 智能任务编排
+
 
 - **多模态交互**：支持文字和语音双重输入方式
 - **任务分解执行**：自动将复杂任务分解为可执行步骤
