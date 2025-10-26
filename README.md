@@ -228,45 +228,7 @@ siwei/
 └── product/              # 产品文档
 ```
 
-## 🎯 核心功能
-
-### 1. 多模态交互
-
-- **语音输入**: 基于 Porcupine 的语音唤醒和识别
-- **文字输入**: 实时文本处理和意图理解
-- **快捷键**: `Ctrl+Shift+V` 激活应用主窗口
-- **快捷键**: `Ctrl+Shift+Space` 激活并启动实时声音识别
-
-### 2. 任务智能编排
-
-- **自动分解**: 将复杂任务拆分为可执行步骤
-- **状态跟踪**: 实时显示任务执行进度
-- **错误处理**: 智能错误恢复和重试机制
-
-### 3. MCP 生态集成
-
-```typescript
-// 默认集成的 MCP 服务器
-const defaultServers = [
-  {
-    name: "playwright/mcp",
-    command: "npx",
-    args: ["playwright/mcp"],
-  },
-  {
-    name: "desktop-commander", 
-    command: "desktop-commander",
-    args: [],
-  },
-  {
-    name: "self-server-mcp",
-    command: "node",
-    args: ["./self-server-mcp/index.js"],
-  }
-]
-```
-
 ## 👨‍💻 作者
 
-**Alain** - [yinxulai@hotmail.com](mailto:yinxulai@hotmail.com)
-**Hannah** - [cynthia.qingye@gmail.com](mailto:cynthia.qingye@gmail.com)
+- **Alain** - [yinxulai@hotmail.com](mailto:yinxulai@hotmail.com)
+- **Hannah** - [cynthia.qingye@gmail.com](mailto:cynthia.qingye@gmail.com)
