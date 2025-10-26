@@ -189,3 +189,28 @@ export const CloseWindowSchema = routerSchema({
   }),
   response: responseSchema(z.boolean()),
 })
+
+// ==================== 语音交互 Schema ====================
+
+const activateVoiceInputDescription = `
+激活语音输入功能
+
+**功能说明：**
+- 自动显示主面板窗口并聚焦
+- 向前端发送语音唤醒信号
+- 启动语音输入模式，等待用户说话
+- 相当于快捷键 Ctrl+Shift+Space 的 API 实现
+
+**使用场景：**
+- 语音唤醒检测到关键词后自动触发
+- MCP 组件通过 API 调用激活语音功能
+- 第三方集成通过 HTTP API 触发语音交互
+`
+
+export const ActivateVoiceInputSchema = routerSchema({
+  operationId: 'activateVoiceInput',
+  summary: '激活语音输入',
+  tags: ['语音交互'],
+  description: activateVoiceInputDescription,
+  response: responseSchema(z.boolean()),
+})

@@ -377,8 +377,6 @@ export function createWindowService(options: WindowServiceOptions = {}) {
     return true
   }
 
-
-
   function activateVoiceInput(): boolean {
     // 显示主窗口
     showMainWindow()

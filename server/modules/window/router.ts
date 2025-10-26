@@ -10,6 +10,7 @@ import {
   QuitAppSchema,
   OpenWindowSchema,
   CloseWindowSchema,
+  ActivateVoiceInputSchema,
 } from './schema'
 import { WindowService } from './service'
 
@@ -58,6 +59,13 @@ export function createWindowRouter(options: WindowRouterOptions): FastifyPluginA
     typedApp.post('/window/close', { schema: CloseWindowSchema }, async (req) => {
       const { type } = req.body
       const result = windowService.closeWindow(type)
+      return createSuccessResponse(result)
+    })
+
+    // ==================== 语音交互 API ====================
+
+    typedApp.post('/window/voice/activate', { schema: ActivateVoiceInputSchema }, async () => {
+      const result = windowService.activateVoiceInput()
       return createSuccessResponse(result)
     })
   }
