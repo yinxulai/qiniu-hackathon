@@ -37,7 +37,6 @@ export class VoiceWakeupService {
   private isListening = false
   private config: VoiceWakeupConfig
   private events: VoiceWakeupEvents
-  private audioBuffer: Int16Array | null = null
 
   constructor(config: VoiceWakeupConfig, events: VoiceWakeupEvents) {
     this.config = config

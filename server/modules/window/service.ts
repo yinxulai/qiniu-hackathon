@@ -379,6 +379,23 @@ export function createWindowService(options: WindowServiceOptions = {}) {
 
 
 
+  function activateVoiceInput(): boolean {
+    // 显示主窗口
+    showMainWindow()
+    
+    // 发送语音激活消息到主窗口
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return false
+    }
+    
+    mainWindow.webContents.send('voice-wakeup-detected', {
+      timestamp: Date.now(),
+      action: 'start-voice-input'
+    })
+    
+    return true
+  }
+
   return {
     cleanup,
     showAllWindows,
@@ -391,7 +408,7 @@ export function createWindowService(options: WindowServiceOptions = {}) {
     reloadMainWindow,
     navigate,
     quit,
-    getMainWindow: () => mainWindow,
+    activateVoiceInput,
     // 简化的窗口操作方法
     openWindow,
     closeWindow,

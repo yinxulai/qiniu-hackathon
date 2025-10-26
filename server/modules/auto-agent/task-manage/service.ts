@@ -2,13 +2,6 @@ import Store from 'electron-store'
 import { v4 as uuidv4 } from 'uuid'
 import { tool } from "langchain"
 import type { Task, Step, CreateTaskInput, UpdateTaskInput, StepStatus } from './schema'
-import {
-  CreateTaskInputSchema,
-  UpdateTaskInputSchema,
-  StepStatusEnum,
-  TaskSchema
-} from './schema'
-import { z } from 'zod'
 
 const store = new Store<{ tasks: Task[] }>({
   name: 'task-manage',
