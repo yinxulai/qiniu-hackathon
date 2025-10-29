@@ -742,7 +742,7 @@ export const activateVoiceInput = <ThrowOnError extends boolean = false>(options
  * 控制指定窗口的开发者工具
  *
  * **功能说明：**
- * - 支持打开、关闭、切换指定窗口的 DevTools
+ * - 支持打开、关闭、切换 Siwei 指定窗口的 DevTools
  * - 可用于调试和开发时的问题排查
  * - 仅在开发环境或调试需要时使用
  *
@@ -766,7 +766,7 @@ export const openDevTools = <ThrowOnError extends boolean = false>(options: Opti
  * 控制指定窗口的开发者工具
  *
  * **功能说明：**
- * - 支持打开、关闭、切换指定窗口的 DevTools
+ * - 支持打开、关闭、切换 Siwei 指定窗口的 DevTools
  * - 可用于调试和开发时的问题排查
  * - 仅在开发环境或调试需要时使用
  *
@@ -790,7 +790,7 @@ export const closeDevTools = <ThrowOnError extends boolean = false>(options: Opt
  * 控制指定窗口的开发者工具
  *
  * **功能说明：**
- * - 支持打开、关闭、切换指定窗口的 DevTools
+ * - 支持打开、关闭、切换 Siwei 指定窗口的 DevTools
  * - 可用于调试和开发时的问题排查
  * - 仅在开发环境或调试需要时使用
  *
