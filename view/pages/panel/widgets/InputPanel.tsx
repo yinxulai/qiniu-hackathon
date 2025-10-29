@@ -140,11 +140,19 @@ function InputPanel({}: InputPanelProps) {
       }
     }
 
+    // 监听快捷键语音激活事件
+    const handleVoiceActivation = () => {
+      console.log('[InputPanel] Voice activation triggered by shortcut')
+      handleVoiceInput()
+    }
+
     // 注册事件监听器
     window.electronAPI?.onVoiceWakeup?.(handleVoiceWakeup)
+    window.electronAPI?.onVoiceActivation?.(handleVoiceActivation)
 
     return () => {
       window.electronAPI?.removeVoiceWakeupListener?.()
+      window.electronAPI?.removeVoiceActivationListener?.()
     }
   }, [handleVoiceInput]) // 添加 handleVoiceInput 依赖
 
