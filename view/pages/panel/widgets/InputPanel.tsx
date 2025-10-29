@@ -305,7 +305,7 @@ function InputPanel({}: InputPanelProps) {
             </div>
           )}
           {!asrConnected && !isRecording && !isProcessing && !asrError && (
-            <div className="text-gray-500 text-sm">
+            <div className="text-gray-200 text-sm font-medium">
               💬 输入指令或点击语音按钮开始对话
             </div>
           )}
