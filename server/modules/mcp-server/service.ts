@@ -20,6 +20,22 @@ const store = new Store<{ servers: McpServer[] }>({
         }
       },
       {
+        "id": "amap",
+        "name": "amap",
+        "transport": "stdio",
+        "enabled": true,
+        "config": {
+          "command": "npx",
+          "args": [
+            "-y",
+            "@amap/amap-maps-mcp-server"
+          ],
+          "env": {
+            "AMAP_MAPS_API_KEY": `TODO`
+          }
+        }
+      },
+      {
         "id": "desktop-commander",
         "name": "desktop-commander",
         "transport": "stdio",

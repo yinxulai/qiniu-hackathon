@@ -39,7 +39,7 @@ export function createAutoAgentService(taskService: TaskManageService) {
     
     return storedConfig || {
       id: 'default',
-      apiKey: 'sk-cd8ca153d613bcb43042cf6228581e3d840e8782fa653ec87dfdfe980880b0cb',
+      apiKey: 'sk-your-api-key',
       baseUrl: 'https://openai.qiniu.com/v1',
       modelId: 'claude-3.7-sonnet',
       systemPrompt: defaultSystemPrompt,
