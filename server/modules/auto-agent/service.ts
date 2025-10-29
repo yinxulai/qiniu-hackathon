@@ -183,7 +183,7 @@ export function createAutoAgentService(taskService: TaskManageService) {
       const startTime = Date.now()
       const response = await agent.invoke({
         messages: langchainMessages,
-      }, { recursionLimit: 100 })
+      }, { recursionLimit: 200 })
       const duration = Date.now() - startTime
 
       console.log('[AUTO-AGENT] Agent response received in', duration, 'ms, message count:', response.messages?.length || 0)
