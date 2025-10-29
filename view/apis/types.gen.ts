@@ -1940,6 +1940,284 @@ export type CloseWindowResponses = {
 
 export type CloseWindowResponse = CloseWindowResponses[keyof CloseWindowResponses];
 
+export type ActivateVoiceInputData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/window/voice/activate';
+};
+
+export type ActivateVoiceInputErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ActivateVoiceInputError = ActivateVoiceInputErrors[keyof ActivateVoiceInputErrors];
+
+export type ActivateVoiceInputResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ActivateVoiceInputResponse = ActivateVoiceInputResponses[keyof ActivateVoiceInputResponses];
+
+export type OpenDevToolsData = {
+    body?: never;
+    path: {
+        type: string;
+    };
+    query?: never;
+    url: '/window/devtools/open/{type}';
+};
+
+export type OpenDevToolsErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type OpenDevToolsError = OpenDevToolsErrors[keyof OpenDevToolsErrors];
+
+export type OpenDevToolsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type OpenDevToolsResponse = OpenDevToolsResponses[keyof OpenDevToolsResponses];
+
+export type CloseDevToolsData = {
+    body?: never;
+    path: {
+        type: string;
+    };
+    query?: never;
+    url: '/window/devtools/close/{type}';
+};
+
+export type CloseDevToolsErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type CloseDevToolsError = CloseDevToolsErrors[keyof CloseDevToolsErrors];
+
+export type CloseDevToolsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type CloseDevToolsResponse = CloseDevToolsResponses[keyof CloseDevToolsResponses];
+
+export type ToggleDevToolsData = {
+    body?: never;
+    path: {
+        type: string;
+    };
+    query?: never;
+    url: '/window/devtools/toggle/{type}';
+};
+
+export type ToggleDevToolsErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ToggleDevToolsError = ToggleDevToolsErrors[keyof ToggleDevToolsErrors];
+
+export type ToggleDevToolsResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: boolean;
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ToggleDevToolsResponse = ToggleDevToolsResponses[keyof ToggleDevToolsResponses];
+
 export type GetAgentConfigData = {
     body?: never;
     path?: never;
@@ -2221,6 +2499,83 @@ export type ChatResponses = {
 };
 
 export type ChatResponse = ChatResponses[keyof ChatResponses];
+
+export type ClearAgentCacheData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/autoAgent/clearCache';
+};
+
+export type ClearAgentCacheErrors = {
+    /**
+     * Default Response
+     */
+    400: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'INVALID_INPUT' | 'UNAUTHORIZED' | 'NOT_FOUND';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+    /**
+     * Default Response
+     */
+    500: {
+        /**
+         * 响应数据
+         */
+        data: null;
+        /**
+         * 响应状态码
+         */
+        status: 'UNKNOWN_ERROR' | 'NOT_IMPLEMENTED';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ClearAgentCacheError = ClearAgentCacheErrors[keyof ClearAgentCacheErrors];
+
+export type ClearAgentCacheResponses = {
+    /**
+     * Default Response
+     */
+    200: {
+        /**
+         * 响应数据
+         */
+        data: {
+            /**
+             * 是否成功清除缓存
+             */
+            success: boolean;
+            /**
+             * 操作结果消息
+             */
+            message: string;
+        };
+        /**
+         * 响应状态码
+         */
+        status: 'SUCCESS';
+        /**
+         * 响应消息
+         */
+        message: string;
+    };
+};
+
+export type ClearAgentCacheResponse = ClearAgentCacheResponses[keyof ClearAgentCacheResponses];
 
 export type GetAsrConfigData = {
     body?: never;

@@ -11,6 +11,9 @@ import {
   OpenWindowSchema,
   CloseWindowSchema,
   ActivateVoiceInputSchema,
+  OpenDevToolsSchema,
+  CloseDevToolsSchema,
+  ToggleDevToolsSchema,
 } from './schema'
 import { WindowService } from './service'
 
@@ -66,6 +69,26 @@ export function createWindowRouter(options: WindowRouterOptions): FastifyPluginA
 
     typedApp.post('/window/voice/activate', { schema: ActivateVoiceInputSchema }, async () => {
       const result = windowService.activateVoiceInput()
+      return createSuccessResponse(result)
+    })
+
+    // ==================== DevTools 控制 API ====================
+
+    typedApp.post('/window/devtools/open/:type', { schema: OpenDevToolsSchema }, async (req) => {
+      const { type } = req.params as { type: string }
+      const result = windowService.openDevTools(type as any)
+      return createSuccessResponse(result)
+    })
+
+    typedApp.post('/window/devtools/close/:type', { schema: CloseDevToolsSchema }, async (req) => {
+      const { type } = req.params as { type: string }
+      const result = windowService.closeDevTools(type as any)
+      return createSuccessResponse(result)
+    })
+
+    typedApp.post('/window/devtools/toggle/:type', { schema: ToggleDevToolsSchema }, async (req) => {
+      const { type } = req.params as { type: string }
+      const result = windowService.toggleDevTools(type as any)
       return createSuccessResponse(result)
     })
   }

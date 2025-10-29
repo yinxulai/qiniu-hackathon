@@ -2,7 +2,7 @@
 
 import { client } from './client.gen.js';
 import type { Client, Options as Options2, TDataShape } from './client/index.js';
-import type { ChatData, ChatErrors, ChatResponses, CloseWindowData, CloseWindowErrors, CloseWindowResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteAsrConfigData, DeleteAsrConfigErrors, DeleteAsrConfigResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetAsrConfigData, GetAsrConfigErrors, GetAsrConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, OpenWindowData, OpenWindowErrors, OpenWindowResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateAsrConfigData, UpdateAsrConfigErrors, UpdateAsrConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
+import type { ActivateVoiceInputData, ActivateVoiceInputErrors, ActivateVoiceInputResponses, ChatData, ChatErrors, ChatResponses, ClearAgentCacheData, ClearAgentCacheErrors, ClearAgentCacheResponses, CloseDevToolsData, CloseDevToolsErrors, CloseDevToolsResponses, CloseWindowData, CloseWindowErrors, CloseWindowResponses, CreateMcpServerData, CreateMcpServerErrors, CreateMcpServerResponses, CreateTaskData, CreateTaskErrors, CreateTaskResponses, DeleteAsrConfigData, DeleteAsrConfigErrors, DeleteAsrConfigResponses, DeleteMcpServerData, DeleteMcpServerErrors, DeleteMcpServerResponses, DeleteTaskData, DeleteTaskErrors, DeleteTaskResponses, DisableMcpServerData, DisableMcpServerErrors, DisableMcpServerResponses, EnableMcpServerData, EnableMcpServerErrors, EnableMcpServerResponses, GetAgentConfigData, GetAgentConfigErrors, GetAgentConfigResponses, GetAsrConfigData, GetAsrConfigErrors, GetAsrConfigResponses, GetOpenapiJsonData, GetOpenapiJsonResponses, GetTaskData, GetTaskErrors, GetTaskResponses, HideWindowData, HideWindowErrors, HideWindowResponses, ListEnabledMcpServerData, ListEnabledMcpServerErrors, ListEnabledMcpServerResponses, ListMcpServerData, ListMcpServerErrors, ListMcpServerResponses, ListTasksData, ListTasksErrors, ListTasksResponses, OpenDevToolsData, OpenDevToolsErrors, OpenDevToolsResponses, OpenWindowData, OpenWindowErrors, OpenWindowResponses, QuitAppData, QuitAppErrors, QuitAppResponses, ReloadWindowData, ReloadWindowErrors, ReloadWindowResponses, ShowWindowData, ShowWindowErrors, ShowWindowResponses, ToggleDevToolsData, ToggleDevToolsErrors, ToggleDevToolsResponses, ToggleWindowData, ToggleWindowErrors, ToggleWindowResponses, UpdateAgentConfigData, UpdateAgentConfigErrors, UpdateAgentConfigResponses, UpdateAsrConfigData, UpdateAsrConfigErrors, UpdateAsrConfigResponses, UpdateMcpServerData, UpdateMcpServerErrors, UpdateMcpServerResponses, UpdateStepStatusData, UpdateStepStatusErrors, UpdateStepStatusResponses, UpdateTaskData, UpdateTaskErrors, UpdateTaskResponses } from './types.gen.js';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -530,13 +530,13 @@ export const updateStepStatus = <ThrowOnError extends boolean = false>(options: 
  * 显示主面板窗口
  *
  * **功能说明：**
- * - 显示并聚焦语音助手主面板窗口
+ * - 显示并聚焦Siwei主面板窗口
  * - 窗口固定在屏幕右侧，宽度 320px
  * - 如果窗口未创建，则自动创建新窗口
  * - 支持快捷键 Ctrl+Shift+V 快速唤醒
  *
  * **使用场景：**
- * - 用户需要打开语音助手界面进行交互
+ * - 用户需要打开Siwei界面进行交互
  * - 通过 API 或快捷键激活助手功能
  *
  */
@@ -554,7 +554,7 @@ export const showWindow = <ThrowOnError extends boolean = false>(options?: Optio
  * 隐藏主面板窗口
  *
  * **功能说明：**
- * - 隐藏语音助手主面板窗口但不关闭进程
+ * - 隐藏Siwei主面板窗口但不关闭进程
  * - 窗口状态和数据保持在内存中
  * - 可通过快捷键 Ctrl+Shift+V 或 API 重新显示
  * - 隐藏后助手仍在后台运行，可处理语音唤醒
@@ -623,7 +623,7 @@ export const reloadWindow = <ThrowOnError extends boolean = false>(options?: Opt
  * 退出应用
  *
  *
- * 完全退出语音助手应用
+ * 完全退出Siwei应用
  *
  * **功能说明：**
  * - 关闭所有窗口（主面板、调试、设置窗口）
@@ -632,7 +632,7 @@ export const reloadWindow = <ThrowOnError extends boolean = false>(options?: Opt
  * - 注销全局快捷键绑定
  *
  * **使用场景：**
- * - 完全关闭语音助手应用
+ * - 完全关闭Siwei应用
  * - 系统关机前的安全退出
  * - 重启应用前的清理操作
  *
@@ -707,6 +707,103 @@ export const closeWindow = <ThrowOnError extends boolean = false>(options: Optio
             'Content-Type': 'application/json',
             ...options.headers
         }
+    });
+};
+
+/**
+ * 激活语音输入
+ *
+ *
+ * 激活语音输入功能
+ *
+ * **功能说明：**
+ * - 自动显示主面板窗口并聚焦
+ * - 向前端发送语音唤醒信号
+ * - 启动语音输入模式，等待用户说话
+ * - 相当于快捷键 Ctrl+Shift+Space 的 API 实现
+ *
+ * **使用场景：**
+ * - 语音唤醒检测到关键词后自动触发
+ * - MCP 组件通过 API 调用激活语音功能
+ * - 第三方集成通过 HTTP API 触发语音交互
+ *
+ */
+export const activateVoiceInput = <ThrowOnError extends boolean = false>(options?: Options<ActivateVoiceInputData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ActivateVoiceInputResponses, ActivateVoiceInputErrors, ThrowOnError>({
+        url: '/window/voice/activate',
+        ...options
+    });
+};
+
+/**
+ * 打开指定窗口的 DevTools
+ *
+ *
+ * 控制指定窗口的开发者工具
+ *
+ * **功能说明：**
+ * - 支持打开、关闭、切换指定窗口的 DevTools
+ * - 可用于调试和开发时的问题排查
+ * - 仅在开发环境或调试需要时使用
+ *
+ * **窗口类型：**
+ * - panel: 主面板窗口
+ * - debug: 调试窗口
+ * - setting: 设置窗口
+ *
+ */
+export const openDevTools = <ThrowOnError extends boolean = false>(options: Options<OpenDevToolsData, ThrowOnError>) => {
+    return (options.client ?? client).post<OpenDevToolsResponses, OpenDevToolsErrors, ThrowOnError>({
+        url: '/window/devtools/open/{type}',
+        ...options
+    });
+};
+
+/**
+ * 关闭指定窗口的 DevTools
+ *
+ *
+ * 控制指定窗口的开发者工具
+ *
+ * **功能说明：**
+ * - 支持打开、关闭、切换指定窗口的 DevTools
+ * - 可用于调试和开发时的问题排查
+ * - 仅在开发环境或调试需要时使用
+ *
+ * **窗口类型：**
+ * - panel: 主面板窗口
+ * - debug: 调试窗口
+ * - setting: 设置窗口
+ *
+ */
+export const closeDevTools = <ThrowOnError extends boolean = false>(options: Options<CloseDevToolsData, ThrowOnError>) => {
+    return (options.client ?? client).post<CloseDevToolsResponses, CloseDevToolsErrors, ThrowOnError>({
+        url: '/window/devtools/close/{type}',
+        ...options
+    });
+};
+
+/**
+ * 切换指定窗口的 DevTools 开关状态
+ *
+ *
+ * 控制指定窗口的开发者工具
+ *
+ * **功能说明：**
+ * - 支持打开、关闭、切换指定窗口的 DevTools
+ * - 可用于调试和开发时的问题排查
+ * - 仅在开发环境或调试需要时使用
+ *
+ * **窗口类型：**
+ * - panel: 主面板窗口
+ * - debug: 调试窗口
+ * - setting: 设置窗口
+ *
+ */
+export const toggleDevTools = <ThrowOnError extends boolean = false>(options: Options<ToggleDevToolsData, ThrowOnError>) => {
+    return (options.client ?? client).post<ToggleDevToolsResponses, ToggleDevToolsErrors, ThrowOnError>({
+        url: '/window/devtools/toggle/{type}',
+        ...options
     });
 };
 
@@ -805,7 +902,7 @@ export const updateAgentConfig = <ThrowOnError extends boolean = false>(options?
  * - 文本生成、分析和推理能力
  *
  * **使用场景：**
- * - 语音助手的智能对话功能
+ * - Siwei的智能对话功能
  * - 自动化任务执行和管理
  * - 复杂查询和多步骤操作处理
  * - 智能问答和决策支持
@@ -819,6 +916,25 @@ export const chat = <ThrowOnError extends boolean = false>(options: Options<Chat
             'Content-Type': 'application/json',
             ...options.headers
         }
+    });
+};
+
+/**
+ * 清除 Agent 缓存
+ *
+ *
+ * 清除 AI Agent 缓存
+ *
+ * **功能说明：**
+ * - 强制清除已缓存的 AI Agent 实例
+ * - 下次调用时将重新创建 Agent
+ * - 主要用于调试或配置更新后的强制刷新
+ *
+ */
+export const clearAgentCache = <ThrowOnError extends boolean = false>(options?: Options<ClearAgentCacheData, ThrowOnError>) => {
+    return (options?.client ?? client).post<ClearAgentCacheResponses, ClearAgentCacheErrors, ThrowOnError>({
+        url: '/autoAgent/clearCache',
+        ...options
     });
 };
 

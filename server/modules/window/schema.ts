@@ -214,3 +214,58 @@ export const ActivateVoiceInputSchema = routerSchema({
   description: activateVoiceInputDescription,
   response: responseSchema(z.boolean()),
 })
+
+// ==================== DevTools 控制 Schema ====================
+
+const devToolsDescription = `
+控制指定窗口的开发者工具
+
+**功能说明：**
+- 支持打开、关闭、切换指定窗口的 DevTools
+- 可用于调试和开发时的问题排查
+- 仅在开发环境或调试需要时使用
+
+**窗口类型：**
+- panel: 主面板窗口
+- debug: 调试窗口  
+- setting: 设置窗口
+`
+
+export const OpenDevToolsSchema = routerSchema({
+  operationId: 'openDevTools',
+  summary: '打开指定窗口的 DevTools',
+  tags: ['开发工具'],
+  description: devToolsDescription,
+  request: {
+    params: z.object({
+      type: WindowType.describe('窗口类型'),
+    }),
+  },
+  response: responseSchema(z.boolean()),
+})
+
+export const CloseDevToolsSchema = routerSchema({
+  operationId: 'closeDevTools',
+  summary: '关闭指定窗口的 DevTools',
+  tags: ['开发工具'],
+  description: devToolsDescription,
+  request: {
+    params: z.object({
+      type: WindowType.describe('窗口类型'),
+    }),
+  },
+  response: responseSchema(z.boolean()),
+})
+
+export const ToggleDevToolsSchema = routerSchema({
+  operationId: 'toggleDevTools',
+  summary: '切换指定窗口的 DevTools 开关状态',
+  tags: ['开发工具'],
+  description: devToolsDescription,
+  request: {
+    params: z.object({
+      type: WindowType.describe('窗口类型'),
+    }),
+  },
+  response: responseSchema(z.boolean()),
+})

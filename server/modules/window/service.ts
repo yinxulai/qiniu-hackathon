@@ -350,10 +350,6 @@ export function createWindowService(options: WindowServiceOptions = {}) {
       }
     })
 
-    if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-      window.webContents.openDevTools()
-    }
-
     windows.set(type, window)
     return window
   }
@@ -394,6 +390,38 @@ export function createWindowService(options: WindowServiceOptions = {}) {
     return true
   }
 
+  function openDevTools(type: WindowType): boolean {
+    const window = windows.get(type)
+    if (!window || window.isDestroyed()) return false
+    
+    if (!window.webContents.isDevToolsOpened()) {
+      window.webContents.openDevTools()
+    }
+    return true
+  }
+
+  function closeDevTools(type: WindowType): boolean {
+    const window = windows.get(type)
+    if (!window || window.isDestroyed()) return false
+    
+    if (window.webContents.isDevToolsOpened()) {
+      window.webContents.closeDevTools()
+    }
+    return true
+  }
+
+  function toggleDevTools(type: WindowType): boolean {
+    const window = windows.get(type)
+    if (!window || window.isDestroyed()) return false
+    
+    if (window.webContents.isDevToolsOpened()) {
+      window.webContents.closeDevTools()
+    } else {
+      window.webContents.openDevTools()
+    }
+    return true
+  }
+
   return {
     cleanup,
     showAllWindows,
@@ -410,5 +438,9 @@ export function createWindowService(options: WindowServiceOptions = {}) {
     // 简化的窗口操作方法
     openWindow,
     closeWindow,
+    // DevTools 控制方法
+    openDevTools,
+    closeDevTools,
+    toggleDevTools,
   }
 }
