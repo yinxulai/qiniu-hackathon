@@ -4,6 +4,8 @@ import { createAgent } from 'langchain'
 import { ChatOpenAI } from '@langchain/openai'
 import { MultiServerMCPClient } from '@langchain/mcp-adapters'
 import { HumanMessage, AIMessage, SystemMessage, BaseMessage } from '@langchain/core/messages'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 import type { AgentConfig, Message, UpdateAgentConfigInput } from './schema'
 import { createMcpServerService } from '../mcp-server/service'
 import type { TaskManageService } from './task-manage/service'
@@ -20,25 +22,40 @@ export function createAutoAgentService(taskService: TaskManageService) {
   let cachedAgent: any = null
   let cachedConfigHash: string = ''
 
+  // 加载默认系统提示词
+  function loadDefaultSystemPrompt(): string {
+    try {
+      const systemPromptPath = join(process.cwd(), 'static', 'system.prompt.md')
+      return readFileSync(systemPromptPath, 'utf-8')
+    } catch (error) {
+      console.warn('[AUTO-AGENT] Failed to load default system prompt:', error)
+      return ''
+    }
+  }
+
   function getConfig(): AgentConfig {
-    return store.get('config') || {
+    const defaultSystemPrompt = loadDefaultSystemPrompt()
+    const storedConfig = store.get('config')
+    
+    return storedConfig || {
       id: 'default',
       apiKey: 'sk-cd8ca153d613bcb43042cf6228581e3d840e8782fa653ec87dfdfe980880b0cb',
       baseUrl: 'https://openai.qiniu.com/v1',
       modelId: 'claude-3.7-sonnet',
-      systemPrompt: '',
+      systemPrompt: defaultSystemPrompt,
     }
   }
 
   function updateConfig(updates: UpdateAgentConfigInput): AgentConfig {
     const current = getConfig()
+    const defaultSystemPrompt = loadDefaultSystemPrompt()
 
     const updated: AgentConfig = {
       id: current?.id || uuidv4(),
       apiKey: updates.apiKey ?? current?.apiKey ?? '',
       baseUrl: updates.baseUrl ?? current?.baseUrl ?? '',
       modelId: updates.modelId ?? current?.modelId ?? '',
-      systemPrompt: updates.systemPrompt ?? current?.systemPrompt,
+      systemPrompt: updates.systemPrompt ?? current?.systemPrompt ?? defaultSystemPrompt,
     }
 
     store.set('config', updated)
